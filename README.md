@@ -1,19 +1,8 @@
 # EDAutoMission
-Automatically accepts missions of a type
-(This is a work in progress so expect bugs)
-
-This code is provided for archival purposes only. You are welcome to fork and continue development under the license terms.
-
-> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Automatically accepts missions of a type.
 
 ## Installation
-There are two ways to run the program: As a python script, or the built code. The raw python supports both command-line and gui control, while the built .exe only can be run through the gui. 
+Run the program as a Python script from the command line.
 
 ### For development/testing purposes:
 1. Ensure Python 3 is installed
@@ -22,24 +11,17 @@ There are two ways to run the program: As a python script, or the built code. Th
     - It is recommended to install to the default path (`C:/Program Files/Tesseract`), however, if installing to a different drive, ensure that you install directly to the drive, i.e. to `D:/Tesseract` (where `D:` is the drive you are installing Tesseract to)
 3. Install requirements (`pip install -r requirements.txt`)
 
-### Built GUI Version
-1. Download the .exe file from the releases section
-4. [Install Tesseract](https://github.com/tesseract-ocr/tessdoc/blob/main/Installation.md)
-    - It is recommended to install to the default path (`C:/Program Files/Tesseract`), however, if installing to a different drive, ensure that you install directly to the drive, i.e. to `D:/Tesseract` (where `D:` is the drive you are installing Tesseract to)
-
 ## How to use:
 1. Dock and click starport services
 2. Make sure mission board is selected (see image, below)
-3. Go to the GUI or your terminal
-4. Run the script (`python main_ody.py` for current features or `python main.py` for experimental branch), or click the go button on the GUI
+3. Go to your terminal
+4. Run the script (`python main.py`)
 5. (non-Windows only) Tab back to the game within 5 seconds
 
 To prematurely exit the program:
 1. Wait for the script to finish checking missions, if it is doing so
-1. Alt tab back to the terminal or GUI
-2. Manually interrupt the program (`ctrl-c` on most terminals), or click the exit button
-
-![Screenshot of starting state](https://cdn.discordapp.com/attachments/945223875279601687/957878152657526784/unknown.png)
+1. Alt tab back to the terminal
+2. Manually interrupt the program (`ctrl-c` on most terminals)
 
 ## Current Features
 - Odyssey support through CLI (run as script)
@@ -53,9 +35,6 @@ To prematurely exit the program:
 
 ## Roadmap/Plans
 (Subject to change, though if its possible by my knowledge it will be added)
-  - Have a GUI and standalone application
-    - User input of Tesseract binary file path
-    - User selection of Horizons/Odyssey
   - Add configurations for missions of other commodities/types
   - Horizons support (in progress)
   - Extend support to aspect ratios other than 16:9 (in testing)

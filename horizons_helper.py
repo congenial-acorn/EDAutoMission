@@ -3,19 +3,19 @@
 # Low level implementation of main script functionalities for Horizons
 
 def open_missions_board():
-    pass
+    raise NotImplementedError("Horizons mission interactions not yet implemented.")
 
 def at_bottom():
-    pass
+    raise NotImplementedError("Horizons mission interactions not yet implemented.")
 
 def ocr_mission():
-    pass
+    raise NotImplementedError("Horizons mission interactions not yet implemented.")
 
 def accept_mission():
-    pass
+    raise NotImplementedError("Horizons mission interactions not yet implemented.")
 
 def next_mission():
-    pass
+    raise NotImplementedError("Horizons mission interactions not yet implemented.")
 
 def return_to_starport():
-    pass
+    raise NotImplementedError("Horizons mission interactions not yet implemented.")

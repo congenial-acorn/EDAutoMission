@@ -1,10 +1,12 @@
 # OCR.py
-# By Pon Pon
+# Originally by Pon Pon
+# Now developed by congenial-acorn
 # Purpose: Place to store generic OCR functions for use in Ody and Horiz
 # implementations of the script
 
 import logging
 import os
+import random
 from string import ascii_uppercase as ALPHABET
 from shutil import copy
 from time import sleep
@@ -17,6 +19,9 @@ from PIL import Image
 from psutil import process_iter
 
 screenWidth, screenHeight = pyautogui.size()  # Get the size of the primary monitor.
+
+def slight_random_time(base: float) -> float:
+    return random.random() + base
 
 def module_setup():
     """
@@ -116,15 +121,15 @@ def game_running():
     return False
 
 def game_mode():
-    pydirectinput.press('esc', presses=2, interval=0.6)  # Open pause menu
+    pydirectinput.press('esc', presses=2, interval=slight_random_time(0.6))  # Open pause menu
     sleep(0.5)
     check_for_odyssey = ocr_screen_location(  # Look at logo in top left
         (int(0.09583*screenWidth),int(0.1361*screenHeight),
          int(0.20625*screenWidth),int(0.10278*screenHeight))
         )
     sleep(0.5)
-    pydirectinput.press('esc', interval=0.5)  # Close pause menu
-    pydirectinput.press('space', interval=0.5)  # Reopen starport services
+    pydirectinput.press('esc', interval=slight_random_time(0.5))  # Close pause menu
+    pydirectinput.press('space', interval=slight_random_time(0.5))  # Reopen starport services
     sleep(1) # Pause to let starport services load
     return("odyssey" if "odyssey" in check_for_odyssey.lower() else "horizons")
 

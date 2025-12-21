@@ -3,3 +3,7 @@
 /dist
 *.spec
 ocr_debug.png
+.conda/
+wing_debug.png
+test_wing_mission.py
+cursor_position.py

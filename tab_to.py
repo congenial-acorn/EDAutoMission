@@ -1,5 +1,6 @@
 # tab_to.py
-# By Pon Pon
+# Originally by Pon Pon
+# Now developed by congenial-acorn
 # Class to tab to a specific window based on a regex input. Based on code from:
 # https://stackoverflow.com/questions/2090464/python-window-activation
 

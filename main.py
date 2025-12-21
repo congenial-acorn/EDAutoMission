@@ -1,131 +1,103 @@
 # main.py
-# by Pon Pon
-# High-level, functional execution of the main goal of the script (to automate
-# selection of various missions, and checking of the mission board every 10
-# minutes) in a DLC agnostic manner.
-
 import logging
-from sys import exit
-from time import sleep, localtime 
-from queue import Empty
 from platform import system
+from time import sleep
+from typing import Optional, Sequence
 
 import helper_functions
-
-# Stores what missions the script looks for
-missions_needed = [
-    # [Text to detect, mission type]
-    ["BERT", "Bertrandte"],
-    ["GOLD", "Gold"],
-    ["SILVER", "Silver"],
-]
+from mission_registry import MissionRegistry, mission_registry
+from mission_runner import GameInteraction, MissionRunner
 
 if system() == "Windows":
     from pywintypes import error as PyWinError
     from tab_to import tab_to
+else:
+    PyWinError = Exception  # type: ignore[misc,assignment]
 
-def _main(game_interaction):
-    missions = 0
 
-    def _accept_mission(mission_type, missions):
-        logging.info("{} mission detected. Accepting...".format(mission_type))
-        game_interaction.accept_mission()
-        missions += 1
-        return missions
-
-    logging.info("Checking missions...")
-
-    game_interaction.open_missions_board()
-    while not game_interaction.at_bottom():
-        mission_text = game_interaction.ocr_mission()
-        # if True: # DEBUG
-
-        for mission in missions_needed:
-            if mission[0] in mission_text:
-                missions = _accept_mission(mission[1], missions)
-
-        game_interaction.next_mission()
-    # Note: at_bottom() must be set up to avoid an off by one error
-    game_interaction.return_to_starport()
-
-    logging.info("Mission check complete.")
-    return missions
-
-def main():
-    missions = 0
-    helper_functions.module_setup()
-    if not helper_functions.game_running():
-        logging.error("Elite: Dangerous not running!")
-        # exit()
+def focus_game_window() -> None:
+    if system() != "Windows":
+        return
 
     try:
-        raise OSError("Win 11 debug")
-        if system() == "Windows":
-            tab_to("Elite.+Dangerous.+CLIENT")
-            sleep(1)
-        else:
-            raise OSError("Automatic alt tab only works on Windows. Please focus on the Elite window before timer expires.")
+        tab_to("Elite.+Dangerous.+CLIENT")
+        sleep(1)
     except PyWinError as e:
-        logging.debug("Excepted PyWinError: {}".format(e))
-    except OSError as e:
-        logging.info(e)
-        i = 5
-        while i >= 0:
-            logging.info("Starting script in: {}".format(i))
-            sleep(1)
-            i -= 1
+        logging.debug("PyWinError while attempting to focus window: %s", e)
 
-    game_mode = "odyssey"# helper_functions.game_mode() # HARD CODED DO NOT COMMIT
-    if game_mode == "horizons":
-        import horizons_helper as game_interaction
+
+def ensure_game_running() -> None:
+    if not helper_functions.game_running():
+        raise RuntimeError("Elite: Dangerous not running.")
+
+
+def resolve_game_interaction(game_mode: Optional[str] = None) -> GameInteraction:
+    """Return the helper implementation for the detected or specified game mode."""
+    #mode = (game_mode or helper_functions.game_mode()).lower()
+    mode = "odyssey"  # Temporarily force Odyssey mode for testing
+    if mode == "horizons":
+        import horizons_helper as horizons
         logging.info("Operating in Horizons mode")
-    elif game_mode == "odyssey":
-        from odyssey_helper import OdysseyHelper as game_interaction
+        return horizons  # type: ignore[return-value]
+    if mode == "odyssey":
+        from odyssey_helper import OdysseyHelper
+
         logging.info("Operating in Odyssey mode")
+        return OdysseyHelper()
+    raise ValueError(f"Unknown game mode '{mode}'")
+
+
+def start(
+    game_mode: Optional[str] = None,
+    registry: MissionRegistry = mission_registry,
+) -> int:
+    """
+    Entry point for running the mission loop from the CLI.
+
+    :return: Total number of missions detected when the loop finishes.
+    """
+    helper_functions.module_setup()
+    ensure_game_running()
+    focus_game_window()
+
+    game_interaction = resolve_game_interaction(game_mode)
+    runner = MissionRunner(game_interaction, registry)
 
     missions = game_interaction.check_missions_accepted()
-    logging.info("Detected that {} missions already in depot.".format(missions))
+    logging.info("Detected that %s missions already accepted.", missions)
 
     sleep(1)  # Brief pause to prevent errors
-
-    missions += _main(game_interaction) # Initial check
-    logging.info(
-        "Script will now be run every 10 minutes, on the 5 minute mark (e.g. {}:{})".format(
-            int(localtime()[3]),
-            int(round(localtime()[4], -1))+5
-            )
-        )
-
-    mission_count_update = False
-    while missions < 20:
-        logging.debug("Current minute reading is: {}".format(localtime()[4]))
-        # To check every 10 minutes, we look when the clock reads the 5 minute mark
-        # e.g. for 1:55, time.gmtime()[4] will be 55, 55+5=60, 60%10 == 0
-        if ((localtime()[4] + 5) % 10 == 0):
-            missions += _main(game_interaction) # debug
-            mission_count_update = True
-        if mission_count_update:
-            mission_count_update = False
-            logging.info("{} missions in depot.".format(missions))
-            logging.info("Next update at {}:{}".format(
-                int(localtime()[3]),
-                int(round(localtime()[4], -1))+5
-                )
-            )
-        sleep(20) # Slows loop rate to thrice per minute
+    total_missions = runner.run_until_full(missions)
+    return total_missions
 
 
-#Add mission check to missions_needed
-def addMission(missionDetection, missionType):
-    missions_needed.append([missionDetection, missionType])
+def addMission(
+    missionDetection: str | Sequence[str],
+    missionType: str,
+    wing: bool = False,
+    value: int = 0,
+):
+    """Add mission detection configuration (compatibility shim for external callers)."""
+    return mission_registry.add(missionDetection, missionType, wing=wing, value=value)
 
-#Remove mission check from missions_needed
-def removeMission(missionData):
-    missions_needed.remove(missionData)
 
-#Fetch all missions
+def removeMission(mission):
+    """Remove mission detection configuration (compatibility shim for external callers)."""
+    return mission_registry.remove(mission)
+
+
 def getMissions():
-    return missions_needed
+    """Return all mission detection rules."""
+    return mission_registry.all()
+
+
+def main(game_mode: Optional[str] = None):
+    try:
+        start(game_mode=game_mode)
+    except Exception as exc:
+        logging.error("Fatal error: %s", exc)
+        raise
+
 
 if __name__ == "__main__":
     main()
