@@ -1,9 +1,65 @@
-*.pyc
-/build
-/dist
-*.spec
-ocr_debug.png
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
 .conda/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Debug images (generated at runtime)
+*_debug.png
+ocr_debug.png
 wing_debug.png
-test_wing_mission.py
+missions_accepted_debug.png
+
+# Debug/test utilities (keep in repo but ignore local modifications)
 cursor_position.py
+test_wing_mission.py
+
+# Build artifacts
+*.spec
+
+# OS files
+.DS_Store
+Thumbs.db

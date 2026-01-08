@@ -1,45 +1,155 @@
-# EDAutoMission
-Automatically accepts missions of a type.
+# ED Auto Mission
+
+Automatically accepts missions in Elite Dangerous based on configurable criteria.
+
+## Features
+
+- **GUI Interface** - Visual mission configuration and control
+- **Custom Mission Rules** - Add, edit, remove detection patterns
+- **Import/Export** - Save and load mission configurations as JSON
+- **Discord Notifications** - Get alerts when missions are accepted
+- **Auto-scaling** - Works with any 16:9 resolution
+
+## Requirements
+
+- Python 3.10+
+- [Tesseract OCR](https://github.com/tesseract-ocr/tessdoc/blob/main/Installation.md)
+- Elite Dangerous
 
 ## Installation
-Run the program as a Python script from the command line.
 
-### For development/testing purposes:
-1. Ensure Python 3 is installed
-2. Clone the repo
-4. [Install Tesseract](https://github.com/tesseract-ocr/tessdoc/blob/main/Installation.md)
-    - It is recommended to install to the default path (`C:/Program Files/Tesseract`), however, if installing to a different drive, ensure that you install directly to the drive, i.e. to `D:/Tesseract` (where `D:` is the drive you are installing Tesseract to)
-3. Install requirements (`pip install -r requirements.txt`)
+```bash
+# Clone the repository
+git clone https://github.com/Tropingenie/EDAutoMission.git
+cd EDAutoMission
 
-## How to use:
-1. Dock and click starport services
-2. Make sure mission board is selected (see image, below)
-3. Go to your terminal
-4. Run the script (`python main.py`)
-5. (non-Windows only) Tab back to the game within 5 seconds
+# Install dependencies
+pip install -e .
 
-To prematurely exit the program:
-1. Wait for the script to finish checking missions, if it is doing so
-1. Alt tab back to the terminal
-2. Manually interrupt the program (`ctrl-c` on most terminals)
+# Or using requirements.txt
+pip install -r requirements.txt
+```
 
-## Current Features
-- Odyssey support through CLI (run as script)
-- Automatically checks and accepts missions for Bertrandite, Gold, and Silver every 10 minutes
-- 16:9 resolutions supported: 720p, 1080p, 2160p
+### Tesseract Setup
 
-## Features in Testing
-- Consolidate code in `main.py`
-- All cockpit colours should work (when running `main.py`)
-- All 16:9 resolutions should work (`main.py`)
+Install Tesseract OCR for your platform:
 
-## Roadmap/Plans
-(Subject to change, though if its possible by my knowledge it will be added)
-  - Add configurations for missions of other commodities/types
-  - Horizons support (in progress)
-  - Extend support to aspect ratios other than 16:9 (in testing)
-  - Extend support to cockpit colors other than the default (in testing)
-  - Code ruggedization
-    - Improve reliability of mse difference detection for exiting mission board
-    - Improve reliability and simplicity of internal mission count
-    - Remove hard coding of mission names and implement more generic detection
+- **Windows**: Install to `C:\Program Files\Tesseract-OCR` (default) or set `TESSERACT_PATH`
+- **Linux**: `sudo apt install tesseract-ocr`
+- **macOS**: `brew install tesseract`
+
+## Usage
+
+### GUI Mode (Default)
+
+```bash
+python main.py
+```
+
+The GUI allows you to:
+- **Add/Edit/Remove** mission detection rules
+- **Configure** max missions, poll interval, Discord webhook
+- **Start/Stop** the automation runner
+- **Import/Export** mission configurations as JSON
+- **View logs** in real-time
+
+### CLI Mode
+
+```bash
+python main.py --cli
+```
+
+1. Dock at a station and open Starport Services
+2. Navigate to the Mission Board
+3. Run the script
+4. On non-Windows systems, switch back to the game within 5 seconds
+
+Press `Ctrl+C` to stop.
+
+## Configuration
+
+### Via GUI
+
+Edit → Settings to configure:
+- Maximum missions
+- Poll interval
+- Discord webhook
+- Dry run mode
+- Debug OCR
+
+### Via Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ED_MAX_MISSIONS` | `20` | Stop when this many missions are accepted |
+| `ED_POLL_INTERVAL` | `10` | Minutes between mission board scans |
+| `ED_DRY_RUN` | `false` | Log actions without executing (`1` to enable) |
+| `ED_DEBUG_OCR` | `false` | Save OCR debug images (`1` to enable) |
+| `DISCORD_WEBHOOK_URL` | - | Discord webhook for notifications |
+| `TESSERACT_PATH` | auto | Path to Tesseract executable |
+
+## Mission Rules
+
+### Default Rules
+
+The script comes with default rules for wing mining missions:
+- **Bertrandite** (>49M CR)
+- **Gold** (>40M CR)
+- **Silver** (>49M CR)
+- **Indite** (>39M CR)
+
+### Custom Rules
+
+In the GUI, click **Add** to create a custom rule:
+
+- **Label**: Display name for the mission type
+- **Detection Patterns**: Text patterns to match (one group per line)
+  - Use `|` for OR within a group
+  - Multiple lines = AND between groups
+  - Example: `MINE | MINING | BLAST` on one line, `GOLD` on another
+- **Wing Mission**: Check if this should only match wing missions
+- **Min Value**: Minimum credit value to accept
+
+### Import/Export
+
+Save your mission configurations to JSON:
+
+```json
+[
+  {
+    "label": "Gold Mining",
+    "needles": [["MINE", "MINING", "BLAST"], ["GOLD"]],
+    "wing": true,
+    "value": 40000000
+  }
+]
+```
+
+## Project Structure
+
+```
+ed_auto_mission/
+├── core/           # Domain logic (mission rules, runner)
+├── services/       # Infrastructure (OCR, input, screen capture)
+├── adapters/       # Game interaction implementation
+└── gui/            # Graphical user interface
+```
+
+## Supported Resolutions
+
+- All 16:9 resolutions (720p, 1080p, 1440p, 2160p)
+- Coordinates auto-scale from 4K reference
+
+## Roadmap
+
+- [ ] Non-16:9 aspect ratio support
+- [ ] Mission value estimation improvements
+- [ ] Multiple monitor support
+
+## License
+
+MIT
+
+## Disclaimer
+
+Use of automation tools may violate Frontier's Terms of Service. Use at your own risk. The developer is not responsible for any actions taken against your account.
