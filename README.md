@@ -138,17 +138,10 @@ ed_auto_mission/
 ## Supported Resolutions
 
 - All 16:9 resolutions (720p, 1080p, 1440p, 2160p)
-- Coordinates auto-scale from 4K reference
-
-## Roadmap
-
-- [ ] Non-16:9 aspect ratio support
-- [ ] Mission value estimation improvements
-- [ ] Multiple monitor support
 
 ## License
 
-MIT
+This repository is under the [MIT License](https://github.com/congenial-acorn/EDAutoMission/blob/main/LICENSE).
 
 ## Disclaimer
 
