@@ -1,6 +1,6 @@
 # ED Auto Mission
 
-Automatically accepts missions in Elite Dangerous based on configurable criteria.
+Automatically accepts missions in Elite Dangerous based on configurable criteria. Ideal for automatically gathering Wing Mining Missions and Wing Massacre Missions.
 
 ## Features
 
