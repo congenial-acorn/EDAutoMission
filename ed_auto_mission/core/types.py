@@ -64,12 +64,14 @@ class MissionRule:
     - label: display/logging label
     - wing: whether this is a wing mission
     - value: minimum credit value threshold
+    - categories: list of category names this mission belongs to
     """
 
     needles: list[list[str]]
     label: str
     wing: bool = False
     value: int = 0
+    categories: tuple[str, ...] = field(default_factory=tuple)
 
     def matches(self, text: str) -> bool:
         """
@@ -124,7 +126,12 @@ class GameInteraction(Protocol):
         ...
 
     def return_to_starport(self) -> None:
-        """Exit the mission board and return to starport services."""
+        ...
+
+    def return_to_categories(self) -> None:
+        ...
+
+    def navigate_to_category(self, category: str) -> None:
         ...
 
     def check_missions_accepted(self) -> int:

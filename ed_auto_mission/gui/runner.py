@@ -15,8 +15,6 @@ logger = logging.getLogger(__name__)
 
 
 class RunnerThread(threading.Thread):
-    """Background thread for running the mission automation loop."""
-
     def __init__(
         self,
         game: GameInteraction,
@@ -34,22 +32,28 @@ class RunnerThread(threading.Thread):
         self._stop_event = threading.Event()
 
     def stop(self) -> None:
-        """Signal the thread to stop."""
         self._stop_event.set()
 
+    def is_stop_requested(self) -> bool:
+        return self._stop_event.is_set()
+
     def run(self) -> None:
-        """Run the mission automation loop."""
+        from ed_auto_mission.services.timing import set_stop_check, clear_stop_check
+
         total = 0
         try:
+            set_stop_check(self.is_stop_requested)
             total = self._run_automation()
+        except InterruptedError:
+            logger.info("Runner interrupted")
         except Exception as e:
             logger.error("Runner error: %s", e, exc_info=True)
         finally:
+            clear_stop_check()
             if self.on_complete:
                 self.on_complete(total)
 
     def _run_automation(self) -> int:
-        """Execute the automation logic."""
         from ed_auto_mission.core.types import RunnerConfig
         from ed_auto_mission.core.mission_runner import MissionRunner
         from ed_auto_mission.services.discord import setup_discord_logging
@@ -64,12 +68,16 @@ class RunnerThread(threading.Thread):
             dry_run=self.config.dry_run,
         )
 
-        runner = MissionRunner(self.game, self.registry, runner_config)
+        runner = MissionRunner(
+            self.game,
+            self.registry,
+            runner_config,
+            should_stop=self.is_stop_requested,
+        )
 
         return self._run_with_stop_check(runner, self.initial_missions)
 
     def _run_with_stop_check(self, runner, initial: int) -> int:
-        """Run the mission loop with periodic stop checks."""
         from time import localtime
         from ed_auto_mission.services.timing import sleep
 
@@ -85,12 +93,10 @@ class RunnerThread(threading.Thread):
         )
 
         while total_missions < runner.config.max_missions:
-            # Check for stop signal
             if self._stop_event.is_set():
                 logger.info("Runner stopped by user")
                 break
 
-            # Check if it's time to poll
             poll_check = (
                 localtime()[4] + runner.config.poll_offset_minutes
             ) % runner.config.poll_interval_minutes
@@ -101,11 +107,7 @@ class RunnerThread(threading.Thread):
                 total_missions += runner.run_once()
                 logger.info("%d missions in depot", total_missions)
 
-            # Sleep in small increments to check stop signal
-            for _ in range(runner.config.loop_sleep_seconds):
-                if self._stop_event.is_set():
-                    break
-                sleep(1)
+            sleep(runner.config.loop_sleep_seconds)
 
         if total_missions >= runner.config.max_missions:
             logger.info("Mission depot full with %d missions", total_missions)

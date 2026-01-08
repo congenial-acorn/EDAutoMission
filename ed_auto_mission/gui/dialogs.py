@@ -8,14 +8,15 @@ from typing import TYPE_CHECKING
 
 from ed_auto_mission.core.types import MissionRule
 from ed_auto_mission.core.config import AppConfig
+from ed_auto_mission.core.category_navigator import CategoryNavigator
 
 if TYPE_CHECKING:
     pass
 
+AVAILABLE_CATEGORIES = ["all", "combat", "transport", "freelance", "operations", "support", "thargoid"]
+
 
 class MissionEditorDialog:
-    """Dialog for creating or editing a mission rule."""
-
     def __init__(
         self,
         parent: tk.Tk | tk.Toplevel,
@@ -26,14 +27,13 @@ class MissionEditorDialog:
 
         self.dialog = tk.Toplevel(parent)
         self.dialog.title(title)
-        self.dialog.geometry("1000x700")
+        self.dialog.geometry("500x500")
         self.dialog.resizable(False, False)
         self.dialog.transient(parent)
         self.dialog.grab_set()
 
         self._create_widgets(rule)
 
-        # Center on parent
         self.dialog.update_idletasks()
         x = parent.winfo_x() + (parent.winfo_width() - self.dialog.winfo_width()) // 2
         y = parent.winfo_y() + (parent.winfo_height() - self.dialog.winfo_height()) // 2
@@ -42,7 +42,6 @@ class MissionEditorDialog:
         self.dialog.wait_window()
 
     def _create_widgets(self, rule: MissionRule | None) -> None:
-        """Create dialog widgets."""
         main_frame = ttk.Frame(self.dialog, padding=10)
         main_frame.pack(fill=tk.BOTH, expand=True)
 
@@ -61,28 +60,27 @@ class MissionEditorDialog:
         pattern_frame = ttk.Frame(main_frame)
         pattern_frame.grid(row=1, column=1, sticky=tk.W, pady=5)
 
-        self.pattern_text = tk.Text(pattern_frame, width=35, height=8)
+        self.pattern_text = tk.Text(pattern_frame, width=35, height=6)
         pattern_scroll = ttk.Scrollbar(pattern_frame, orient=tk.VERTICAL, command=self.pattern_text.yview)
         self.pattern_text.configure(yscrollcommand=pattern_scroll.set)
 
         self.pattern_text.pack(side=tk.LEFT, fill=tk.BOTH)
         pattern_scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # Pre-populate patterns
         if rule:
             pattern_lines = []
             for group in rule.needles:
                 pattern_lines.append(" | ".join(group))
             self.pattern_text.insert(1.0, "\n".join(pattern_lines))
 
-        ttk.Label(main_frame, text="(One group per line, use | for OR)", font=("", 8)).grid(
+        ttk.Label(main_frame, text="(One group per line, use | for OR. Use CAPS)", font=("", 8)).grid(
             row=2, column=1, sticky=tk.W
         )
 
         # Wing mission checkbox
         self.wing_var = tk.BooleanVar(value=rule.wing if rule else False)
         ttk.Checkbutton(main_frame, text="Wing Mission", variable=self.wing_var).grid(
-            row=3, column=1, sticky=tk.W, pady=10
+            row=3, column=1, sticky=tk.W, pady=5
         )
 
         # Minimum value
@@ -92,21 +90,35 @@ class MissionEditorDialog:
             row=4, column=1, sticky=tk.W, pady=5
         )
 
+        # Categories
+        ttk.Label(main_frame, text="Categories:").grid(row=5, column=0, sticky=tk.NW, pady=5)
+
+        cat_frame = ttk.Frame(main_frame)
+        cat_frame.grid(row=5, column=1, sticky=tk.W, pady=5)
+
+        self.category_vars: dict[str, tk.BooleanVar] = {}
+        existing_categories = set(rule.categories) if rule else set()
+
+        for i, cat in enumerate(AVAILABLE_CATEGORIES):
+            var = tk.BooleanVar(value=cat in existing_categories)
+            self.category_vars[cat] = var
+            ttk.Checkbutton(cat_frame, text=cat.capitalize(), variable=var).grid(
+                row=i // 4, column=i % 4, sticky=tk.W, padx=5
+            )
+
         # Buttons
         btn_frame = ttk.Frame(main_frame)
-        btn_frame.grid(row=5, column=0, columnspan=2, pady=20)
+        btn_frame.grid(row=6, column=0, columnspan=2, pady=20)
 
         ttk.Button(btn_frame, text="Save", command=self._save, width=10).pack(side=tk.LEFT, padx=5)
         ttk.Button(btn_frame, text="Cancel", command=self._cancel, width=10).pack(side=tk.LEFT, padx=5)
 
     def _save(self) -> None:
-        """Validate and save the mission rule."""
         label = self.label_var.get().strip()
         if not label:
             messagebox.showerror("Validation Error", "Label is required.")
             return
 
-        # Parse patterns
         pattern_text = self.pattern_text.get(1.0, tk.END).strip()
         if not pattern_text:
             messagebox.showerror("Validation Error", "At least one detection pattern is required.")
@@ -124,11 +136,15 @@ class MissionEditorDialog:
             messagebox.showerror("Validation Error", "At least one detection pattern is required.")
             return
 
-        # Parse value
         try:
             value = int(self.value_var.get().replace(",", "").strip() or "0")
         except ValueError:
             messagebox.showerror("Validation Error", "Min Value must be a number.")
+            return
+
+        categories = tuple(cat for cat, var in self.category_vars.items() if var.get())
+        if not categories:
+            messagebox.showerror("Validation Error", "At least one category must be selected.")
             return
 
         self.result = MissionRule(
@@ -136,17 +152,15 @@ class MissionEditorDialog:
             label=label,
             wing=self.wing_var.get(),
             value=value,
+            categories=categories,
         )
         self.dialog.destroy()
 
     def _cancel(self) -> None:
-        """Cancel the dialog."""
         self.dialog.destroy()
 
 
 class SettingsDialog:
-    """Dialog for application settings."""
-
     def __init__(self, parent: tk.Tk | tk.Toplevel, config: AppConfig):
         self.result: AppConfig | None = None
         self.config = config
@@ -160,7 +174,6 @@ class SettingsDialog:
 
         self._create_widgets()
 
-        # Center on parent
         self.dialog.update_idletasks()
         x = parent.winfo_x() + (parent.winfo_width() - self.dialog.winfo_width()) // 2
         y = parent.winfo_y() + (parent.winfo_height() - self.dialog.winfo_height()) // 2
@@ -169,13 +182,11 @@ class SettingsDialog:
         self.dialog.wait_window()
 
     def _create_widgets(self) -> None:
-        """Create dialog widgets."""
         main_frame = ttk.Frame(self.dialog, padding=15)
         main_frame.pack(fill=tk.BOTH, expand=True)
 
         row = 0
 
-        # Max missions
         ttk.Label(main_frame, text="Max Missions:").grid(row=row, column=0, sticky=tk.W, pady=5)
         self.max_var = tk.StringVar(value=str(self.config.max_missions))
         ttk.Entry(main_frame, textvariable=self.max_var, width=10).grid(
@@ -183,7 +194,6 @@ class SettingsDialog:
         )
         row += 1
 
-        # Poll interval
         ttk.Label(main_frame, text="Poll Interval (min):").grid(row=row, column=0, sticky=tk.W, pady=5)
         self.poll_var = tk.StringVar(value=str(self.config.poll_interval_minutes))
         ttk.Entry(main_frame, textvariable=self.poll_var, width=10).grid(
@@ -191,7 +201,6 @@ class SettingsDialog:
         )
         row += 1
 
-        # Poll offset
         ttk.Label(main_frame, text="Poll Offset (min):").grid(row=row, column=0, sticky=tk.W, pady=5)
         self.offset_var = tk.StringVar(value=str(self.config.poll_offset_minutes))
         ttk.Entry(main_frame, textvariable=self.offset_var, width=10).grid(
@@ -199,7 +208,6 @@ class SettingsDialog:
         )
         row += 1
 
-        # Discord webhook
         ttk.Label(main_frame, text="Discord Webhook:").grid(row=row, column=0, sticky=tk.W, pady=5)
         self.webhook_var = tk.StringVar(value=self.config.discord_webhook_url or "")
         ttk.Entry(main_frame, textvariable=self.webhook_var, width=30).grid(
@@ -207,21 +215,18 @@ class SettingsDialog:
         )
         row += 1
 
-        # Dry run
         self.dry_run_var = tk.BooleanVar(value=self.config.dry_run)
         ttk.Checkbutton(main_frame, text="Dry Run (log only, no actions)", variable=self.dry_run_var).grid(
             row=row, column=0, columnspan=2, sticky=tk.W, pady=5
         )
         row += 1
 
-        # Debug OCR
         self.debug_var = tk.BooleanVar(value=self.config.debug_ocr)
         ttk.Checkbutton(main_frame, text="Debug OCR (save images)", variable=self.debug_var).grid(
             row=row, column=0, columnspan=2, sticky=tk.W, pady=5
         )
         row += 1
 
-        # Buttons
         btn_frame = ttk.Frame(main_frame)
         btn_frame.grid(row=row, column=0, columnspan=2, pady=20)
 
@@ -229,7 +234,6 @@ class SettingsDialog:
         ttk.Button(btn_frame, text="Cancel", command=self._cancel, width=10).pack(side=tk.LEFT, padx=5)
 
     def _save(self) -> None:
-        """Validate and save settings."""
         try:
             max_missions = int(self.max_var.get())
             poll_interval = int(self.poll_var.get())
@@ -247,10 +251,9 @@ class SettingsDialog:
             discord_webhook_url=webhook,
             dry_run=self.dry_run_var.get(),
             debug_ocr=self.debug_var.get(),
-            interactive=False,  # GUI mode is not interactive
+            interactive=False,
         )
         self.dialog.destroy()
 
     def _cancel(self) -> None:
-        """Cancel the dialog."""
         self.dialog.destroy()

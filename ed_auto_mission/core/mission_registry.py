@@ -29,26 +29,25 @@ class MissionRegistry:
         label: str,
         wing: bool = False,
         value: int = 0,
+        categories: list[str] | None = None,
     ) -> MissionRule:
-        """Add a new mission detection rule."""
         rule = MissionRule(
             needles=needles,
             label=label.strip(),
             wing=wing,
             value=int(value),
+            categories=tuple(categories) if categories else (),
         )
         with self._lock:
             self._missions.append(rule)
         return rule
 
     def add_rule(self, rule: MissionRule) -> MissionRule:
-        """Add an existing MissionRule instance."""
         with self._lock:
             self._missions.append(rule)
         return rule
 
     def add_many(self, missions: Iterable[MissionRule]) -> list[MissionRule]:
-        """Add multiple missions provided as MissionRule instances."""
         added: list[MissionRule] = []
         with self._lock:
             for mission in missions:
@@ -57,7 +56,6 @@ class MissionRegistry:
         return added
 
     def remove(self, mission: MissionRule | str) -> bool:
-        """Remove by MissionRule instance or label. Returns True when removed."""
         with self._lock:
             for idx, existing in enumerate(self._missions):
                 if existing == mission:
@@ -72,12 +70,25 @@ class MissionRegistry:
         return False
 
     def all(self) -> list[MissionRule]:
-        """Return a copy of all registered mission rules."""
         with self._lock:
             return list(self._missions)
 
+    def get_unique_categories(self) -> list[str]:
+        seen: set[str] = set()
+        result: list[str] = []
+        with self._lock:
+            for mission in self._missions:
+                for category in mission.categories:
+                    if category not in seen:
+                        seen.add(category)
+                        result.append(category)
+        return result
+
+    def get_rules_for_category(self, category: str) -> list[MissionRule]:
+        with self._lock:
+            return [m for m in self._missions if category in m.categories]
+
     def clear(self) -> None:
-        """Remove all mission rules."""
         with self._lock:
             self._missions.clear()
 
@@ -96,24 +107,28 @@ DEFAULT_MISSIONS: list[MissionRule] = [
         label="Bertrandite",
         wing=True,
         value=49_000_000,
+        categories=("transport",),
     ),
     MissionRule(
         needles=[["MINE", "MINING", "BLAST"], ["GOLD"]],
         label="Gold",
         wing=True,
         value=40_000_000,
+        categories=("transport",),
     ),
     MissionRule(
         needles=[["MINE", "MINING", "BLAST"], ["SILVER"]],
         label="Silver",
         wing=True,
         value=49_000_000,
+        categories=("transport",),
     ),
     MissionRule(
         needles=[["MINE", "MINING", "BLAST"], ["INDITE"]],
         label="Indite",
         wing=True,
         value=39_000_000,
+        categories=("transport",),
     ),
 ]
 

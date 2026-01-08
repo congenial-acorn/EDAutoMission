@@ -4,36 +4,35 @@ from __future__ import annotations
 
 import logging
 from time import localtime, sleep
-from typing import Optional
+from typing import Callable, Optional
 
 from ed_auto_mission.core.types import GameInteraction, MissionRule, RunnerConfig
 from ed_auto_mission.core.mission_registry import MissionRegistry
 
 logger = logging.getLogger(__name__)
 
-# Custom Discord logging level
 DISCORD_LEVEL = logging.INFO + 5
 
 
 class MissionRunner:
-    """Runs the core mission-collection loop for a given game interaction layer."""
-
     def __init__(
         self,
         game_interaction: GameInteraction,
         registry: MissionRegistry,
         config: RunnerConfig | None = None,
+        should_stop: Callable[[], bool] | None = None,
     ):
         self.game = game_interaction
         self.registry = registry
         self.config = config or RunnerConfig()
+        self._should_stop = should_stop or (lambda: False)
 
-    def _accept_matching_missions(self, mission_text: str) -> int:
-        """Check mission text against all rules and accept matching missions."""
+    def _accept_matching_missions(self, mission_text: str, category: str) -> int:
         accepted = 0
         credit_value = self._extract_credit_value(mission_text)
 
-        for rule in self.registry.all():
+        rules_for_category = self.registry.get_rules_for_category(category)
+        for rule in rules_for_category:
             if self._should_accept_mission(rule, mission_text, credit_value):
                 logger.info("%s mission detected. Accepting...", rule.primary_label)
 
@@ -46,7 +45,6 @@ class MissionRunner:
         return accepted
 
     def _notify_acceptance(self, rule: MissionRule, credit_value: Optional[int]) -> None:
-        """Log mission acceptance to Discord if configured."""
         message = f"Accepted mission: {rule.primary_label}"
         if credit_value is not None:
             message += f" worth {credit_value:,} CR"
@@ -58,12 +56,9 @@ class MissionRunner:
         mission_text: str,
         credit_value: Optional[int],
     ) -> bool:
-        """Apply rule filters (needles AND, optional wing check, value threshold)."""
-        # 1) All needle groups must match
         if not rule.matches(mission_text):
             return False
 
-        # 2) Wing mission check (optional)
         if rule.wing:
             try:
                 wing_result = self.game.check_wing_mission()
@@ -74,7 +69,6 @@ class MissionRunner:
                 logger.debug("Wing check requested but not implemented for this game mode")
                 return False
 
-        # 3) Credit value check
         logger.debug("Extracted credit value: %s", credit_value)
         if credit_value is None:
             return False
@@ -90,9 +84,6 @@ class MissionRunner:
 
     @staticmethod
     def _extract_credit_value(mission_text: str) -> Optional[int]:
-        """
-        Find the numeric value immediately preceding 'CR', scanning backwards.
-        """
         upper_text = mission_text.upper()
         idx = upper_text.find("CR")
         if idx == -1:
@@ -116,24 +107,63 @@ class MissionRunner:
         except ValueError:
             return None
 
-    def run_once(self) -> int:
-        """Perform a single scan of the mission board."""
+    def _scan_category(self, category: str) -> int:
         missions_accepted = 0
-        logger.info("Checking missions...")
+        logger.info("Scanning category: %s", category)
+
+        if self.config.dry_run:
+            logger.info("[DRY RUN] Would navigate to category: %s", category)
+        else:
+            self.game.navigate_to_category(category)
+
+        while not self.game.at_bottom():
+            if self._should_stop():
+                raise InterruptedError("Stop requested")
+
+            mission_text = self.game.ocr_mission()
+            missions_accepted += self._accept_matching_missions(mission_text, category)
+
+            if self.config.dry_run:
+                logger.info("[DRY RUN] Would move to next mission")
+            else:
+                self.game.next_mission()
+
+        return missions_accepted
+
+    def run_once(self) -> int:
+        missions_accepted = 0
+        categories = self.registry.get_unique_categories()
+
+        if not categories:
+            logger.warning("No categories found in mission rules")
+            return 0
+
+        logger.info("Checking missions across %d categories: %s", len(categories), categories)
 
         if self.config.dry_run:
             logger.info("[DRY RUN] Would open missions board")
         else:
             self.game.open_missions_board()
 
-        while not self.game.at_bottom():
-            mission_text = self.game.ocr_mission()
-            missions_accepted += self._accept_matching_missions(mission_text)
+        try:
+            for i, category in enumerate(categories):
+                if self._should_stop():
+                    raise InterruptedError("Stop requested")
 
-            if self.config.dry_run:
-                logger.info("[DRY RUN] Would move to next mission")
-            else:
-                self.game.next_mission()
+                missions_accepted += self._scan_category(category)
+
+                is_last_category = i == len(categories) - 1
+                if not is_last_category:
+                    if self.config.dry_run:
+                        logger.info("[DRY RUN] Would return to categories")
+                    else:
+                        self.game.return_to_categories()
+
+        except InterruptedError:
+            logger.info("Scan interrupted. Returning to starport...")
+            if not self.config.dry_run:
+                self.game.return_to_starport()
+            raise
 
         if self.config.dry_run:
             logger.info("[DRY RUN] Would return to starport")
@@ -144,16 +174,10 @@ class MissionRunner:
         return missions_accepted
 
     def run_until_full(self, existing_missions: int = 0) -> int:
-        """
-        Continuously check for missions until the depot is full.
-
-        Args:
-            existing_missions: Missions already present when the loop begins.
-
-        Returns:
-            Total missions detected once the depot is full.
-        """
         total_missions = existing_missions + self.run_once()
+
+        if self._should_stop():
+            return total_missions
 
         logger.info(
             "Script will now run every %s minutes, on the %s minute mark (e.g. %s:%02d)",
@@ -165,6 +189,10 @@ class MissionRunner:
 
         mission_count_updated = True
         while total_missions < self.config.max_missions:
+            if self._should_stop():
+                logger.info("Stop requested")
+                break
+
             logger.debug("Current minute: %s", localtime()[4])
 
             poll_check = (

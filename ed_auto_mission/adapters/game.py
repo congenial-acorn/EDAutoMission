@@ -11,6 +11,7 @@ from PIL import Image
 
 from ed_auto_mission.core.types import GameInteraction, ScreenRegion
 from ed_auto_mission.core.coordinates import UI_MAP
+from ed_auto_mission.core.category_navigator import CategoryNavigator
 from ed_auto_mission.services.screen import ScreenService
 from ed_auto_mission.services.ocr import OCRService
 from ed_auto_mission.services.input import InputService
@@ -21,7 +22,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Wing icon reference image path
 WING_ICON_PATH = Path(__file__).parent.parent.parent / "wingicon.png"
 
 
@@ -44,12 +44,11 @@ class EliteDangerousGame:
         self._ocr = ocr
         self._input = input_service
         self._debug_output = debug_output
+        self._category_navigator = CategoryNavigator(input_service)
 
-        # Instance state
         self._missions_seen = 0
         self._back_button_original: np.ndarray | None = None
 
-        # Load wing icon reference if available
         self._wing_icon: Image.Image | None = None
         if WING_ICON_PATH.exists():
             self._wing_icon = Image.open(WING_ICON_PATH).convert("RGB")
@@ -57,24 +56,20 @@ class EliteDangerousGame:
             logger.warning("Wing icon not found at %s", WING_ICON_PATH)
 
     def reset_state(self) -> None:
-        """Reset state for a new mission board scan."""
         self._missions_seen = 0
         self._back_button_original = None
 
     def open_missions_board(self) -> None:
-        """Open the missions board from starport services."""
-        # Press space twice to enter missions
         self._input.press("space", presses=2, interval=slight_random_time(2))
-        sleep(5)  # Wait for load
+        sleep(5)
 
-        # Navigate to transport filter
-        #TODO: Create category objects to store keypress sequences. Probably need new function
-        self._input.press("d", presses=2, interval=slight_random_time(0.3))
-        self._input.press("space", interval=slight_random_time(0.3))
-        sleep(5)  # Wait for filter to apply
+    def navigate_to_category(self, category: str) -> None:
+        if not self._category_navigator.navigate_to_category(category):
+            logger.warning("Unknown category: %s", category)
+            return
+        sleep(5)
 
     def at_bottom(self) -> bool:
-        """Check if we've reached the bottom of the mission list."""
         region = UI_MAP.back_button
         scaled = region.scaled(self._screen.width, self._screen.height)
 
@@ -84,18 +79,15 @@ class EliteDangerousGame:
             self._back_button_original = current
             return False
 
-        # Calculate Mean Squared Error
         mse = np.sum(
             (self._back_button_original.astype("float") - current.astype("float")) ** 2
         ) / float(self._back_button_original.shape[0] * current.shape[1])
 
         logger.debug("Back button MSE: %.2f", mse)
 
-        # Color changed = we've scrolled to bottom
         return mse > 1
 
     def ocr_mission(self) -> str:
-        """Read the currently highlighted mission text."""
         region = UI_MAP.get_mission_region(self._missions_seen)
 
         filename = "ocr_debug.png" if self._debug_output else None
@@ -104,7 +96,6 @@ class EliteDangerousGame:
         return text
 
     def check_wing_mission(self) -> bool:
-        """Check if the current mission is a wing mission."""
         if self._wing_icon is None:
             logger.warning("Wing icon reference not loaded, cannot check wing status")
             return False
@@ -117,12 +108,10 @@ class EliteDangerousGame:
         if self._debug_output:
             captured.save("wing_debug.png")
 
-        # Resize wing icon to match captured dimensions
         wing_resized = self._wing_icon.resize(
             (captured.width, captured.height)
         )
 
-        # Calculate MSE
         captured_arr = np.array(captured).astype("float")
         wing_arr = np.array(wing_resized).astype("float")
 
@@ -132,26 +121,25 @@ class EliteDangerousGame:
 
         logger.debug("Wing mission MSE: %.2f", mse)
 
-        # Low MSE = images match = is wing mission
         return mse < 5000
 
     def accept_mission(self) -> None:
-        """Accept the currently highlighted mission."""
         self._input.press("space", presses=2, interval=slight_random_time(0.3))
 
     def next_mission(self) -> None:
-        """Move to the next mission in the list."""
         self._missions_seen += 1
         self._input.press("s", interval=slight_random_time(0.2))
 
-    def return_to_starport(self) -> None:
-        """Exit mission board and return to starport services."""
+    def return_to_categories(self) -> None:
         self.reset_state()
-        self._input.press("backspace", presses=3, interval=slight_random_time(2))
+        self._input.press("backspace", presses=1)
+        sleep(2)
+
+    def return_to_starport(self) -> None:
+        self.reset_state()
+        self._input.press("backspace", presses=2, interval=slight_random_time(2))
 
     def check_missions_accepted(self) -> int:
-        """Read the current mission count from the UI."""
-        # Open missions summary panel
         self._input.press("1", presses=1, interval=slight_random_time(0.3))
         sleep(2)
 
@@ -160,7 +148,6 @@ class EliteDangerousGame:
         filename = "missions_accepted_debug.png" if self._debug_output else None
         count = self._ocr.read_digits(region, debug_filename=filename)
 
-        # Close panel
         self._input.press("1", presses=1, interval=slight_random_time(0.3))
 
         if count is None:
@@ -170,9 +157,7 @@ class EliteDangerousGame:
         return count
 
 
-# Type assertion
 def _check_protocol() -> None:
-    """Static check that EliteDangerousGame implements GameInteraction."""
     interaction: GameInteraction = EliteDangerousGame(
         screen=ScreenService(),
         ocr=OCRService(ScreenService()),
