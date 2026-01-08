@@ -45,6 +45,5 @@ def main() -> int:
             from ed_auto_mission.main import main as cli_main
             return cli_main()
 
-
 if __name__ == "__main__":
     sys.exit(main())

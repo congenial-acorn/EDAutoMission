@@ -68,6 +68,7 @@ class EliteDangerousGame:
         sleep(5)  # Wait for load
 
         # Navigate to transport filter
+        #TODO: Create category objects to store keypress sequences. Probably need new function
         self._input.press("d", presses=2, interval=slight_random_time(0.3))
         self._input.press("space", interval=slight_random_time(0.3))
         sleep(5)  # Wait for filter to apply
