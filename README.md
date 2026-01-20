@@ -1,14 +1,17 @@
 # ED Auto Mission
 
-Automatically accepts missions in Elite Dangerous based on configurable criteria. Ideal for automatically gathering Wing Mining Missions and Wing Massacre Missions.
+Automatically accepts missions in Elite Dangerous based on configurable criteria. Ideal for automatically gathering missions across multiple mission board categories.
 
 ## Features
 
 - **GUI Interface** - Visual mission configuration and control
+- **Mission Categories** - Configure missions for different board categories (all, combat, transport, freelance, operations, support, thargoid)
+- **Category Scanning** - Automatically navigates through all configured categories
 - **Custom Mission Rules** - Add, edit, remove detection patterns
 - **Import/Export** - Save and load mission configurations as JSON
 - **Discord Notifications** - Get alerts when missions are accepted
 - **Auto-scaling** - Works with any 16:9 resolution
+- **Immediate Stop** - Stop button responds instantly (interrupts mid-scan)
 
 ## Requirements
 
@@ -49,7 +52,7 @@ python main.py
 The GUI allows you to:
 - **Add/Edit/Remove** mission detection rules
 - **Configure** max missions, poll interval, Discord webhook
-- **Start/Stop** the automation runner
+- **Start/Stop** automation runner (stops immediately when clicked)
 - **Import/Export** mission configurations as JSON
 - **View logs** in real-time
 
@@ -88,15 +91,29 @@ Edit → Settings to configure:
 | `DISCORD_WEBHOOK_URL` | - | Discord webhook for notifications |
 | `TESSERACT_PATH` | auto | Path to Tesseract executable |
 
+## Mission Categories
+
+The script supports multiple mission board categories. When configuring a mission rule, select one or more categories:
+
+- **all** - All missions (default board view)
+- **combat** - Combat missions
+- **transport** - Transport missions
+- **freelance** - Freelance work
+- **operations** - Operations missions
+- **support** - Support missions
+- **thargoid** - Thargoid-related missions
+
+The scanner will automatically navigate to each configured category, scan all missions, accept matches, then move to the next category until all have been checked.
+
 ## Mission Rules
 
 ### Default Rules
 
 The script comes with default rules for wing mining missions:
-- **Bertrandite** (>49M CR)
-- **Gold** (>40M CR)
-- **Silver** (>49M CR)
-- **Indite** (>39M CR)
+- **Bertrandite** (>49M CR) - Category: transport
+- **Gold** (>40M CR) - Category: transport
+- **Silver** (>49M CR) - Category: transport
+- **Indite** (>39M CR) - Category: transport
 
 ### Custom Rules
 
@@ -107,6 +124,7 @@ In the GUI, click **Add** to create a custom rule:
   - Use `|` for OR within a group
   - Multiple lines = AND between groups
   - Example: `MINE | MINING | BLAST` on one line, `GOLD` on another
+- **Categories**: Select one or more categories where this mission appears
 - **Wing Mission**: Check if this should only match wing missions
 - **Min Value**: Minimum credit value to accept
 
@@ -119,18 +137,29 @@ Save your mission configurations to JSON:
   {
     "label": "Gold Mining",
     "needles": [["MINE", "MINING", "BLAST"], ["GOLD"]],
+    "categories": ["transport"],
     "wing": true,
     "value": 40000000
   }
 ]
 ```
 
+Multiple categories can be specified:
+
+```json
+{
+  "label": "Multi-category Mission",
+  "categories": ["transport", "combat"],
+  ...
+}
+```
+
 ## Project Structure
 
 ```
 ed_auto_mission/
-├── core/           # Domain logic (mission rules, runner)
-├── services/       # Infrastructure (OCR, input, screen capture)
+├── core/           # Domain logic (mission rules, runner, categories)
+├── services/       # Infrastructure (OCR, input, screen capture, timing)
 ├── adapters/       # Game interaction implementation
 └── gui/            # Graphical user interface
 ```
