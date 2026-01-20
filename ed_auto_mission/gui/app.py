@@ -341,7 +341,7 @@ class EDAutoMissionApp:
                 input_service=input_service,
                 debug_output=self.config.debug_ocr,
             )
-        except Exception as e:
+        except (ImportError, RuntimeError, FileNotFoundError) as e:
             self._log(f"Failed to initialize: {e}")
             messagebox.showerror("Initialization Error", str(e))
             return
@@ -418,7 +418,7 @@ class EDAutoMissionApp:
 
             self._populate_mission_list()
             self._log(f"Imported {len(data)} missions from {Path(path).name}")
-        except Exception as e:
+        except (json.JSONDecodeError, KeyError, OSError) as e:
             messagebox.showerror("Import Error", f"Failed to import: {e}")
 
     def _export_missions(self) -> None:
@@ -446,7 +446,7 @@ class EDAutoMissionApp:
                 json.dump(data, f, indent=2)
 
             self._log(f"Exported {len(data)} missions to {Path(path).name}")
-        except Exception as e:
+        except (OSError, TypeError) as e:
             messagebox.showerror("Export Error", f"Failed to export: {e}")
 
     def _show_about(self) -> None:
