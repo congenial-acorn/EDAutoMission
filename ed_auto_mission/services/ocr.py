@@ -8,6 +8,7 @@ from pathlib import Path
 from string import ascii_uppercase
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pytesseract
 from PIL import Image, ImageOps
 
@@ -171,8 +172,6 @@ class OCRService:
         Returns:
             MSE value (0 = identical)
         """
-        import numpy as np
-
         arr1 = np.array(image1).astype("float")
         arr2 = np.array(image2).astype("float")
 
