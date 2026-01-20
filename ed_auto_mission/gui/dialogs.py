@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import tkinter as tk
+from abc import ABC, abstractmethod
 from tkinter import ttk, messagebox
 from typing import TYPE_CHECKING
 
@@ -16,7 +17,54 @@ if TYPE_CHECKING:
 AVAILABLE_CATEGORIES = ["all", "combat", "transport", "freelance", "operations", "support", "thargoid"]
 
 
-class MissionEditorDialog:
+class BaseDialog(tk.Toplevel, ABC):
+    """Base class for dialog windows with common setup logic."""
+
+    def __init__(
+        self,
+        parent: tk.Tk | tk.Toplevel,
+        title: str,
+        width: int = 500,
+        height: int = 400,
+        min_width: int = 400,
+        min_height: int = 300,
+    ) -> None:
+        """Initialize the dialog with common setup.
+
+        Args:
+            parent: Parent window
+            title: Dialog title
+            width: Initial width
+            height: Initial height
+            min_width: Minimum width
+            min_height: Minimum height
+        """
+        super().__init__(parent)
+        self.title(title)
+        self.geometry(f"{width}x{height}")
+        self.minsize(min_width, min_height)
+        self.resizable(True, True)
+        self.transient(parent)
+        self.grab_set()
+
+        # Create widgets before centering
+        self._create_widgets()
+
+        # Center dialog on parent
+        self.update_idletasks()
+        x = parent.winfo_x() + (parent.winfo_width() - self.winfo_width()) // 2
+        y = parent.winfo_y() + (parent.winfo_height() - self.winfo_height()) // 2
+        self.geometry(f"+{x}+{y}")
+
+        self.wait_window()
+
+    @abstractmethod
+    def _create_widgets(self) -> None:
+        """Create dialog widgets. Must be implemented by subclasses."""
+        pass
+
+
+class MissionEditorDialog(BaseDialog):
     def __init__(
         self,
         parent: tk.Tk | tk.Toplevel,
@@ -24,33 +72,18 @@ class MissionEditorDialog:
         rule: MissionRule | None = None,
     ):
         self.result: MissionRule | None = None
+        self.rule = rule
+        super().__init__(parent, title, width=600, height=600, min_width=500, min_height=500)
 
-        self.dialog = tk.Toplevel(parent)
-        self.dialog.title(title)
-        self.dialog.geometry("600x600")
-        self.dialog.minsize(500, 500)
-        self.dialog.resizable(True, True)
-        self.dialog.transient(parent)
-        self.dialog.grab_set()
-
-        self._create_widgets(rule)
-
-        self.dialog.update_idletasks()
-        x = parent.winfo_x() + (parent.winfo_width() - self.dialog.winfo_width()) // 2
-        y = parent.winfo_y() + (parent.winfo_height() - self.dialog.winfo_height()) // 2
-        self.dialog.geometry(f"+{x}+{y}")
-
-        self.dialog.wait_window()
-
-    def _create_widgets(self, rule: MissionRule | None) -> None:
-        main_frame = ttk.Frame(self.dialog, padding=10)
+    def _create_widgets(self) -> None:
+        main_frame = ttk.Frame(self, padding=10)
         main_frame.pack(fill=tk.BOTH, expand=True)
 
         main_frame.columnconfigure(1, weight=1)
 
         # Label
         ttk.Label(main_frame, text="Label:").grid(row=0, column=0, sticky=tk.W, pady=5)
-        self.label_var = tk.StringVar(value=rule.label if rule else "")
+        self.label_var = tk.StringVar(value=self.rule.label if self.rule else "")
         ttk.Entry(main_frame, textvariable=self.label_var, width=40).grid(
             row=0, column=1, sticky=tk.EW, pady=5
         )
@@ -70,9 +103,9 @@ class MissionEditorDialog:
         self.pattern_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         pattern_scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
-        if rule:
+        if self.rule:
             pattern_lines = []
-            for group in rule.needles:
+            for group in self.rule.needles:
                 pattern_lines.append(" | ".join(group))
             self.pattern_text.insert(1.0, "\n".join(pattern_lines))
 
@@ -81,14 +114,14 @@ class MissionEditorDialog:
         )
 
         # Wing mission checkbox
-        self.wing_var = tk.BooleanVar(value=rule.wing if rule else False)
+        self.wing_var = tk.BooleanVar(value=self.rule.wing if self.rule else False)
         ttk.Checkbutton(main_frame, text="Wing Mission", variable=self.wing_var).grid(
             row=3, column=1, sticky=tk.W, pady=5
         )
 
         # Minimum value
         ttk.Label(main_frame, text="Min Value (CR):").grid(row=4, column=0, sticky=tk.W, pady=5)
-        self.value_var = tk.StringVar(value=str(rule.value) if rule and rule.value else "0")
+        self.value_var = tk.StringVar(value=str(self.rule.value) if self.rule and self.rule.value else "0")
         ttk.Entry(main_frame, textvariable=self.value_var, width=20).grid(
             row=4, column=1, sticky=tk.EW, pady=5
         )
@@ -100,7 +133,7 @@ class MissionEditorDialog:
         cat_frame.grid(row=5, column=1, sticky=tk.W, pady=5)
 
         self.category_vars: dict[str, tk.BooleanVar] = {}
-        existing_categories = set(rule.categories) if rule else set()
+        existing_categories = set(self.rule.categories) if self.rule else set()
 
         for i, cat in enumerate(AVAILABLE_CATEGORIES):
             var = tk.BooleanVar(value=cat in existing_categories)
@@ -157,36 +190,20 @@ class MissionEditorDialog:
             value=value,
             categories=categories,
         )
-        self.dialog.destroy()
+        self.destroy()
 
     def _cancel(self) -> None:
-        self.dialog.destroy()
+        self.destroy()
 
 
-class SettingsDialog:
+class SettingsDialog(BaseDialog):
     def __init__(self, parent: tk.Tk | tk.Toplevel, config: AppConfig):
         self.result: AppConfig | None = None
         self.config = config
-
-        self.dialog = tk.Toplevel(parent)
-        self.dialog.title("Settings")
-        self.dialog.geometry("500x400")
-        self.dialog.minsize(400, 300)
-        self.dialog.resizable(True, True)
-        self.dialog.transient(parent)
-        self.dialog.grab_set()
-
-        self._create_widgets()
-
-        self.dialog.update_idletasks()
-        x = parent.winfo_x() + (parent.winfo_width() - self.dialog.winfo_width()) // 2
-        y = parent.winfo_y() + (parent.winfo_height() - self.dialog.winfo_height()) // 2
-        self.dialog.geometry(f"+{x}+{y}")
-
-        self.dialog.wait_window()
+        super().__init__(parent, "Settings", width=500, height=400, min_width=400, min_height=300)
 
     def _create_widgets(self) -> None:
-        main_frame = ttk.Frame(self.dialog, padding=15)
+        main_frame = ttk.Frame(self, padding=15)
         main_frame.pack(fill=tk.BOTH, expand=True)
 
         main_frame.columnconfigure(1, weight=1)
@@ -259,7 +276,7 @@ class SettingsDialog:
             debug_ocr=self.debug_var.get(),
             interactive=False,
         )
-        self.dialog.destroy()
+        self.destroy()
 
     def _cancel(self) -> None:
-        self.dialog.destroy()
+        self.destroy()
