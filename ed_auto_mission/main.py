@@ -154,7 +154,6 @@ def start(
         dry_run=config.dry_run,
     )
     runner = MissionRunner(game, registry, runner_config)
-    #TODO: add categories to runner and OCR each one
     # Get initial mission count
     initial_missions = get_initial_mission_count(config, game)
     logger.info("Starting with %d missions already accepted", initial_missions)
