@@ -96,5 +96,7 @@ else:
 
     def focus_elite_dangerous() -> bool:
         """Window focusing not supported on this platform."""
-        logger.info("Window focusing not available on %s - switch manually", sys.platform)
+        logger.info(
+            "Window focusing not available on %s - switch manually", sys.platform
+        )
         return False

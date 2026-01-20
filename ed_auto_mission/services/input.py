@@ -46,7 +46,9 @@ class InputService:
             interval = slight_random_time(0.2)
 
         if self._dry_run:
-            logger.info("[DRY RUN] Press '%s' x%d (interval: %.2fs)", key, presses, interval)
+            logger.info(
+                "[DRY RUN] Press '%s' x%d (interval: %.2fs)", key, presses, interval
+            )
             return
 
         logger.debug("Pressing '%s' x%d", key, presses)

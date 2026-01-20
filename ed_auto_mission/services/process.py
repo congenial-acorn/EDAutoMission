@@ -50,6 +50,4 @@ def ensure_game_running() -> None:
         RuntimeError: If the game is not detected
     """
     if not is_game_running():
-        raise RuntimeError(
-            "Elite: Dangerous not running. Please start the game first."
-        )
+        raise RuntimeError("Elite: Dangerous not running. Please start the game first.")

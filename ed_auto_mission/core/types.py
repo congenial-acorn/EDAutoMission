@@ -17,7 +17,9 @@ class ScreenRegion:
     ref_width: int = 3840
     ref_height: int = 2160
 
-    def scaled(self, screen_width: int, screen_height: int) -> tuple[int, int, int, int]:
+    def scaled(
+        self, screen_width: int, screen_height: int
+    ) -> tuple[int, int, int, int]:
         """Return (x, y, width, height) scaled to the given screen dimensions."""
         scale_x = screen_width / self.ref_width
         scale_y = screen_height / self.ref_height
@@ -28,7 +30,9 @@ class ScreenRegion:
             int(self.height * scale_y),
         )
 
-    def as_tuple(self, screen_width: int, screen_height: int) -> tuple[int, int, int, int]:
+    def as_tuple(
+        self, screen_width: int, screen_height: int
+    ) -> tuple[int, int, int, int]:
         """Alias for scaled() for pyautogui region parameter."""
         return self.scaled(screen_width, screen_height)
 
@@ -125,14 +129,11 @@ class GameInteraction(Protocol):
         """Move selection to the next mission in the list."""
         ...
 
-    def return_to_starport(self) -> None:
-        ...
+    def return_to_starport(self) -> None: ...
 
-    def return_to_categories(self) -> None:
-        ...
+    def return_to_categories(self) -> None: ...
 
-    def navigate_to_category(self, category: str) -> None:
-        ...
+    def navigate_to_category(self, category: str) -> None: ...
 
     def check_missions_accepted(self) -> int:
         """Return the count of currently accepted missions."""

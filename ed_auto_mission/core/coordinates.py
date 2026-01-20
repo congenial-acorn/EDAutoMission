@@ -15,9 +15,7 @@ class UIMap:
     """UI element coordinates for Elite Dangerous at 3840x2160 reference resolution."""
 
     # Back button region for detecting end of mission list
-    back_button: ScreenRegion = ScreenRegion(
-        x=235, y=1868, width=666, height=90
-    )
+    back_button: ScreenRegion = ScreenRegion(x=235, y=1868, width=666, height=90)
 
     # Mission selection regions (first 6 missions before scrolling)
     mission_regions: tuple[ScreenRegion, ...] = (

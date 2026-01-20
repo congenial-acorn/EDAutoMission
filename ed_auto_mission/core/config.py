@@ -44,13 +44,18 @@ class AppConfig:
             loop_sleep_seconds=int(os.getenv("ED_LOOP_SLEEP", "20")),
             dry_run=os.getenv("ED_DRY_RUN", "").lower() in ("1", "true", "yes"),
             debug_ocr=os.getenv("ED_DEBUG_OCR", "").lower() in ("1", "true", "yes"),
-            interactive=os.getenv("ED_INTERACTIVE", "1").lower() not in ("0", "false", "no"),
+            interactive=os.getenv("ED_INTERACTIVE", "1").lower()
+            not in ("0", "false", "no"),
             discord_webhook_url=os.getenv("DISCORD_WEBHOOK_URL"),
             tesseract_path=os.getenv("TESSERACT_PATH"),
             navigation_delay=float(os.getenv("ED_NAVIGATION_DELAY", "5.0")),
             input_interval=float(os.getenv("ED_INPUT_INTERVAL", "0.3")),
-            back_button_mse_threshold=float(os.getenv("ED_BACK_BUTTON_MSE_THRESHOLD", "1.0")),
-            wing_icon_mse_threshold=float(os.getenv("ED_WING_ICON_MSE_THRESHOLD", "5000.0")),
+            back_button_mse_threshold=float(
+                os.getenv("ED_BACK_BUTTON_MSE_THRESHOLD", "1.0")
+            ),
+            wing_icon_mse_threshold=float(
+                os.getenv("ED_WING_ICON_MSE_THRESHOLD", "5000.0")
+            ),
         )
 
     def prompt_missing_values(self) -> None:

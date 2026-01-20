@@ -178,6 +178,7 @@ class OCRService:
         if arr1.shape != arr2.shape:
             # Resize arr2 to match arr1
             from PIL import Image as PILImage
+
             image2_resized = image2.resize((arr1.shape[1], arr1.shape[0]))
             arr2 = np.array(image2_resized).astype("float")
 

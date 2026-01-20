@@ -111,9 +111,7 @@ class EliteDangerousGame:
         if self._debug_output:
             captured.save("wing_debug.png")
 
-        wing_resized = self._wing_icon.resize(
-            (captured.width, captured.height)
-        )
+        wing_resized = self._wing_icon.resize((captured.width, captured.height))
 
         captured_arr = np.array(captured).astype("float")
         wing_arr = np.array(wing_resized).astype("float")

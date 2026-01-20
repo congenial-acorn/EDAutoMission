@@ -74,7 +74,9 @@ class EDAutoMissionApp:
 
     def _setup_logging(self) -> None:
         handler = QueueHandler(self.log_queue)
-        handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s", "%H:%M:%S"))
+        handler.setFormatter(
+            logging.Formatter("%(asctime)s [%(levelname)s] %(message)s", "%H:%M:%S")
+        )
         handler.setLevel(logging.INFO)
 
         root_logger = logging.getLogger()
@@ -116,7 +118,9 @@ class EDAutoMissionApp:
         list_frame.pack(fill=tk.BOTH, expand=True, side=tk.LEFT)
 
         columns = ("label", "needles", "wing", "min_value", "categories")
-        self.mission_tree = ttk.Treeview(list_frame, columns=columns, show="headings", selectmode="browse")
+        self.mission_tree = ttk.Treeview(
+            list_frame, columns=columns, show="headings", selectmode="browse"
+        )
 
         self.mission_tree.heading("label", text="Label")
         self.mission_tree.heading("needles", text="Detection Patterns")
@@ -130,7 +134,9 @@ class EDAutoMissionApp:
         self.mission_tree.column("min_value", width=100)
         self.mission_tree.column("categories", width=150)
 
-        scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.mission_tree.yview)
+        scrollbar = ttk.Scrollbar(
+            list_frame, orient=tk.VERTICAL, command=self.mission_tree.yview
+        )
         self.mission_tree.configure(yscrollcommand=scrollbar.set)
 
         self.mission_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -142,12 +148,22 @@ class EDAutoMissionApp:
         btn_frame = ttk.Frame(top_frame, padding=5)
         btn_frame.pack(fill=tk.Y, side=tk.RIGHT)
 
-        ttk.Button(btn_frame, text="Add", command=self._add_mission, width=10).pack(pady=2)
-        ttk.Button(btn_frame, text="Edit", command=self._edit_mission, width=10).pack(pady=2)
-        ttk.Button(btn_frame, text="Remove", command=self._remove_mission, width=10).pack(pady=2)
+        ttk.Button(btn_frame, text="Add", command=self._add_mission, width=10).pack(
+            pady=2
+        )
+        ttk.Button(btn_frame, text="Edit", command=self._edit_mission, width=10).pack(
+            pady=2
+        )
+        ttk.Button(
+            btn_frame, text="Remove", command=self._remove_mission, width=10
+        ).pack(pady=2)
         ttk.Separator(btn_frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=10)
-        ttk.Button(btn_frame, text="Move Up", command=self._move_up, width=10).pack(pady=2)
-        ttk.Button(btn_frame, text="Move Down", command=self._move_down, width=10).pack(pady=2)
+        ttk.Button(btn_frame, text="Move Up", command=self._move_up, width=10).pack(
+            pady=2
+        )
+        ttk.Button(btn_frame, text="Move Down", command=self._move_down, width=10).pack(
+            pady=2
+        )
 
         bottom_frame = ttk.Frame(paned)
         paned.add(bottom_frame, weight=2)
@@ -156,7 +172,9 @@ class EDAutoMissionApp:
         log_frame.pack(fill=tk.BOTH, expand=True, side=tk.LEFT)
 
         self.log_text = tk.Text(log_frame, state=tk.DISABLED, wrap=tk.WORD)
-        log_scroll = ttk.Scrollbar(log_frame, orient=tk.VERTICAL, command=self.log_text.yview)
+        log_scroll = ttk.Scrollbar(
+            log_frame, orient=tk.VERTICAL, command=self.log_text.yview
+        )
         self.log_text.configure(yscrollcommand=log_scroll.set)
 
         self.log_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -167,18 +185,26 @@ class EDAutoMissionApp:
 
         self.status_var = tk.StringVar(value="Stopped")
         ttk.Label(ctrl_frame, text="Status:").pack(anchor=tk.W)
-        self.status_label = ttk.Label(ctrl_frame, textvariable=self.status_var, font=("", 10, "bold"))
+        self.status_label = ttk.Label(
+            ctrl_frame, textvariable=self.status_var, font=("", 10, "bold")
+        )
         self.status_label.pack(anchor=tk.W, pady=(0, 10))
 
         ttk.Label(ctrl_frame, text="Initial Missions:").pack(anchor=tk.W)
         self.initial_missions_var = tk.StringVar(value="0")
-        self.initial_missions_entry = ttk.Entry(ctrl_frame, textvariable=self.initial_missions_var, width=10)
+        self.initial_missions_entry = ttk.Entry(
+            ctrl_frame, textvariable=self.initial_missions_var, width=10
+        )
         self.initial_missions_entry.pack(anchor=tk.W, pady=(0, 10))
 
-        self.start_btn = ttk.Button(ctrl_frame, text="Start", command=self._toggle_runner, width=12)
+        self.start_btn = ttk.Button(
+            ctrl_frame, text="Start", command=self._toggle_runner, width=12
+        )
         self.start_btn.pack(pady=5)
 
-        ttk.Button(ctrl_frame, text="Clear Log", command=self._clear_log, width=12).pack(pady=5)
+        ttk.Button(
+            ctrl_frame, text="Clear Log", command=self._clear_log, width=12
+        ).pack(pady=5)
 
     def _on_treeview_resize(self) -> None:
         tree_width = self.mission_tree.winfo_width()
@@ -211,13 +237,17 @@ class EDAutoMissionApp:
                 "(" + "|".join(group) + ")" for group in rule.needles
             )
             categories_str = ", ".join(rule.categories) if rule.categories else "-"
-            self.mission_tree.insert("", tk.END, values=(
-                rule.label,
-                needles_str,
-                "Yes" if rule.wing else "No",
-                f"{rule.value:,}" if rule.value else "-",
-                categories_str,
-            ))
+            self.mission_tree.insert(
+                "",
+                tk.END,
+                values=(
+                    rule.label,
+                    needles_str,
+                    "Yes" if rule.wing else "No",
+                    f"{rule.value:,}" if rule.value else "-",
+                    categories_str,
+                ),
+            )
 
     def _add_mission(self) -> None:
         dialog = MissionEditorDialog(self.root, "Add Mission")
@@ -265,7 +295,9 @@ class EDAutoMissionApp:
             return
 
         rule = rules[idx]
-        if messagebox.askyesno("Confirm Remove", f"Remove mission rule '{rule.label}'?"):
+        if messagebox.askyesno(
+            "Confirm Remove", f"Remove mission rule '{rule.label}'?"
+        ):
             self.registry.remove(rule)
             self._populate_mission_list()
             self._log("Removed mission rule: " + rule.label)
@@ -374,7 +406,9 @@ class EDAutoMissionApp:
             self._log("Settings updated")
 
     def _reset_defaults(self) -> None:
-        if messagebox.askyesno("Reset to Defaults", "Reset all mission rules to defaults?"):
+        if messagebox.askyesno(
+            "Reset to Defaults", "Reset all mission rules to defaults?"
+        ):
             self.registry.clear()
             self.registry.add_many(DEFAULT_MISSIONS)
             self._populate_mission_list()
@@ -383,7 +417,7 @@ class EDAutoMissionApp:
     def _import_missions(self) -> None:
         path = filedialog.askopenfilename(
             title="Import Missions",
-            filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
         )
         if not path:
             return
@@ -415,7 +449,7 @@ class EDAutoMissionApp:
         path = filedialog.asksaveasfilename(
             title="Export Missions",
             defaultextension=".json",
-            filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
         )
         if not path:
             return
@@ -444,7 +478,7 @@ class EDAutoMissionApp:
             "About ED Auto Mission",
             "ED Auto Mission v2.0.0\n\n"
             "Automatically accepts missions in Elite Dangerous.\n\n"
-            "https://github.com/Tropingenie/EDAutoMission"
+            "https://github.com/Tropingenie/EDAutoMission",
         )
 
     def _log(self, message: str) -> None:

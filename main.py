@@ -32,18 +32,22 @@ def main() -> int:
     if "--cli" in args:
         # CLI mode
         from ed_auto_mission.main import main as cli_main
+
         return cli_main()
     else:
         # GUI mode (default)
         try:
             from ed_auto_mission.gui import run_gui
+
             run_gui()
             return 0
         except ImportError as e:
             print(f"GUI dependencies not available: {e}")
             print("Falling back to CLI mode...")
             from ed_auto_mission.main import main as cli_main
+
             return cli_main()
+
 
 if __name__ == "__main__":
     sys.exit(main())

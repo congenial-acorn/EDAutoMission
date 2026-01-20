@@ -29,7 +29,7 @@ class MissionRunner:
 
     def _execute_or_log(self, action_name: str, action: Callable) -> None:
         """Execute an action or log it if in dry-run mode.
-        
+
         Args:
             action_name: Description of the action for logging
             action: Callable that performs the actual action
@@ -55,7 +55,9 @@ class MissionRunner:
 
         return accepted
 
-    def _notify_acceptance(self, rule: MissionRule, credit_value: Optional[int]) -> None:
+    def _notify_acceptance(
+        self, rule: MissionRule, credit_value: Optional[int]
+    ) -> None:
         message = f"Accepted mission: {rule.primary_label}"
         if credit_value is not None:
             message += f" worth {credit_value:,} CR"
@@ -77,7 +79,9 @@ class MissionRunner:
                 if not wing_result:
                     return False
             except NotImplementedError:
-                logger.debug("Wing check requested but not implemented for this game mode")
+                logger.debug(
+                    "Wing check requested but not implemented for this game mode"
+                )
                 return False
 
         logger.debug("Extracted credit value: %s", credit_value)
@@ -122,7 +126,10 @@ class MissionRunner:
         missions_accepted = 0
         logger.info("Scanning category: %s", category)
 
-        self._execute_or_log(f"navigate to category: {category}", lambda: self.game.navigate_to_category(category))
+        self._execute_or_log(
+            f"navigate to category: {category}",
+            lambda: self.game.navigate_to_category(category),
+        )
 
         while not self.game.at_bottom():
             if self._should_stop():
@@ -143,7 +150,9 @@ class MissionRunner:
             logger.warning("No categories found in mission rules")
             return 0
 
-        logger.info("Checking missions across %d categories: %s", len(categories), categories)
+        logger.info(
+            "Checking missions across %d categories: %s", len(categories), categories
+        )
 
         self._execute_or_log("open missions board", self.game.open_missions_board)
 
@@ -156,7 +165,9 @@ class MissionRunner:
 
                 is_last_category = i == len(categories) - 1
                 if not is_last_category:
-                    self._execute_or_log("return to categories", self.game.return_to_categories)
+                    self._execute_or_log(
+                        "return to categories", self.game.return_to_categories
+                    )
 
         except InterruptedError:
             logger.info("Scan interrupted. Returning to starport...")
