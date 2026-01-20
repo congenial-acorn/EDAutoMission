@@ -146,3 +146,7 @@ This repository is under the [MIT License](https://github.com/congenial-acorn/ED
 ## Disclaimer
 
 Use of automation tools violates Frontier's Terms of Service. Use at your own risk. The developer is not responsible for any actions taken against your account.
+
+## Credits
+
+Originally forked from [Tropingenie/EDAutoMission](https://github.com/Tropingenie/EDAutoMission)
