@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 from PIL import Image
 
-from ed_auto_mission.core.types import GameInteraction, ScreenRegion
 from ed_auto_mission.core.coordinates import UI_MAP
 from ed_auto_mission.core.category_navigator import CategoryNavigator
 from ed_auto_mission.core.config import AppConfig

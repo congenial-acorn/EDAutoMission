@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import sys
-from typing import Optional
 
 from ed_auto_mission.core.config import AppConfig
 from ed_auto_mission.core.types import RunnerConfig, MissionRule

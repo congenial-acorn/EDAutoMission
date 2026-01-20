@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import logging
 import queue
-import threading
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from pathlib import Path

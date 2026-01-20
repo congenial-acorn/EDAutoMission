@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING
 
 from ed_auto_mission.core.types import MissionRule
 from ed_auto_mission.core.config import AppConfig
-from ed_auto_mission.core.category_navigator import CategoryNavigator
 
 if TYPE_CHECKING:
     pass

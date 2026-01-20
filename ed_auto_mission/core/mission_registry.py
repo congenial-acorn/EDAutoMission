@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from threading import RLock
-from typing import Iterable, Sequence
+from typing import Iterable
 
 from ed_auto_mission.core.types import MissionRule
 
