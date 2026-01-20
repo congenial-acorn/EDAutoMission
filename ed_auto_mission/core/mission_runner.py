@@ -27,6 +27,18 @@ class MissionRunner:
         self.config = config or RunnerConfig()
         self._should_stop = should_stop or (lambda: False)
 
+    def _execute_or_log(self, action_name: str, action: Callable) -> None:
+        """Execute an action or log it if in dry-run mode.
+        
+        Args:
+            action_name: Description of the action for logging
+            action: Callable that performs the actual action
+        """
+        if self.config.dry_run:
+            logger.info("[DRY RUN] Would %s", action_name)
+        else:
+            action()
+
     def _accept_matching_missions(self, mission_text: str, category: str) -> int:
         accepted = 0
         credit_value = self._extract_credit_value(mission_text)
@@ -36,8 +48,7 @@ class MissionRunner:
             if self._should_accept_mission(rule, mission_text, credit_value):
                 logger.info("%s mission detected. Accepting...", rule.primary_label)
 
-                if not self.config.dry_run:
-                    self.game.accept_mission()
+                self._execute_or_log("accept mission", self.game.accept_mission)
 
                 self._notify_acceptance(rule, credit_value)
                 accepted += 1
@@ -111,10 +122,7 @@ class MissionRunner:
         missions_accepted = 0
         logger.info("Scanning category: %s", category)
 
-        if self.config.dry_run:
-            logger.info("[DRY RUN] Would navigate to category: %s", category)
-        else:
-            self.game.navigate_to_category(category)
+        self._execute_or_log(f"navigate to category: {category}", lambda: self.game.navigate_to_category(category))
 
         while not self.game.at_bottom():
             if self._should_stop():
@@ -123,10 +131,7 @@ class MissionRunner:
             mission_text = self.game.ocr_mission()
             missions_accepted += self._accept_matching_missions(mission_text, category)
 
-            if self.config.dry_run:
-                logger.info("[DRY RUN] Would move to next mission")
-            else:
-                self.game.next_mission()
+            self._execute_or_log("move to next mission", self.game.next_mission)
 
         return missions_accepted
 
@@ -140,10 +145,7 @@ class MissionRunner:
 
         logger.info("Checking missions across %d categories: %s", len(categories), categories)
 
-        if self.config.dry_run:
-            logger.info("[DRY RUN] Would open missions board")
-        else:
-            self.game.open_missions_board()
+        self._execute_or_log("open missions board", self.game.open_missions_board)
 
         try:
             for i, category in enumerate(categories):
@@ -154,21 +156,14 @@ class MissionRunner:
 
                 is_last_category = i == len(categories) - 1
                 if not is_last_category:
-                    if self.config.dry_run:
-                        logger.info("[DRY RUN] Would return to categories")
-                    else:
-                        self.game.return_to_categories()
+                    self._execute_or_log("return to categories", self.game.return_to_categories)
 
         except InterruptedError:
             logger.info("Scan interrupted. Returning to starport...")
-            if not self.config.dry_run:
-                self.game.return_to_starport()
+            self._execute_or_log("return to starport", self.game.return_to_starport)
             raise
 
-        if self.config.dry_run:
-            logger.info("[DRY RUN] Would return to starport")
-        else:
-            self.game.return_to_starport()
+        self._execute_or_log("return to starport", self.game.return_to_starport)
 
         logger.info("Mission check complete. Accepted %d missions.", missions_accepted)
         return missions_accepted
