@@ -155,12 +155,3 @@ class EliteDangerousGame:
             return 0
 
         return count
-
-
-def _check_protocol() -> None:
-    interaction: GameInteraction = EliteDangerousGame(
-        screen=ScreenService(),
-        ocr=OCRService(ScreenService()),
-        input_service=InputService(),
-    )
-    _ = interaction
