@@ -27,8 +27,9 @@ class MissionEditorDialog:
 
         self.dialog = tk.Toplevel(parent)
         self.dialog.title(title)
-        self.dialog.geometry("500x500")
-        self.dialog.resizable(False, False)
+        self.dialog.geometry("600x600")
+        self.dialog.minsize(500, 500)
+        self.dialog.resizable(True, True)
         self.dialog.transient(parent)
         self.dialog.grab_set()
 
@@ -45,11 +46,13 @@ class MissionEditorDialog:
         main_frame = ttk.Frame(self.dialog, padding=10)
         main_frame.pack(fill=tk.BOTH, expand=True)
 
+        main_frame.columnconfigure(1, weight=1)
+
         # Label
         ttk.Label(main_frame, text="Label:").grid(row=0, column=0, sticky=tk.W, pady=5)
         self.label_var = tk.StringVar(value=rule.label if rule else "")
         ttk.Entry(main_frame, textvariable=self.label_var, width=40).grid(
-            row=0, column=1, sticky=tk.W, pady=5
+            row=0, column=1, sticky=tk.EW, pady=5
         )
 
         # Detection patterns
@@ -58,13 +61,13 @@ class MissionEditorDialog:
         )
 
         pattern_frame = ttk.Frame(main_frame)
-        pattern_frame.grid(row=1, column=1, sticky=tk.W, pady=5)
+        pattern_frame.grid(row=1, column=1, sticky=tk.EW, pady=5)
 
         self.pattern_text = tk.Text(pattern_frame, width=35, height=6)
         pattern_scroll = ttk.Scrollbar(pattern_frame, orient=tk.VERTICAL, command=self.pattern_text.yview)
         self.pattern_text.configure(yscrollcommand=pattern_scroll.set)
 
-        self.pattern_text.pack(side=tk.LEFT, fill=tk.BOTH)
+        self.pattern_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         pattern_scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
         if rule:
@@ -87,7 +90,7 @@ class MissionEditorDialog:
         ttk.Label(main_frame, text="Min Value (CR):").grid(row=4, column=0, sticky=tk.W, pady=5)
         self.value_var = tk.StringVar(value=str(rule.value) if rule and rule.value else "0")
         ttk.Entry(main_frame, textvariable=self.value_var, width=20).grid(
-            row=4, column=1, sticky=tk.W, pady=5
+            row=4, column=1, sticky=tk.EW, pady=5
         )
 
         # Categories
@@ -167,8 +170,9 @@ class SettingsDialog:
 
         self.dialog = tk.Toplevel(parent)
         self.dialog.title("Settings")
-        self.dialog.geometry("400x300")
-        self.dialog.resizable(False, False)
+        self.dialog.geometry("500x400")
+        self.dialog.minsize(400, 300)
+        self.dialog.resizable(True, True)
         self.dialog.transient(parent)
         self.dialog.grab_set()
 
@@ -185,33 +189,35 @@ class SettingsDialog:
         main_frame = ttk.Frame(self.dialog, padding=15)
         main_frame.pack(fill=tk.BOTH, expand=True)
 
+        main_frame.columnconfigure(1, weight=1)
+
         row = 0
 
         ttk.Label(main_frame, text="Max Missions:").grid(row=row, column=0, sticky=tk.W, pady=5)
         self.max_var = tk.StringVar(value=str(self.config.max_missions))
         ttk.Entry(main_frame, textvariable=self.max_var, width=10).grid(
-            row=row, column=1, sticky=tk.W, pady=5
+            row=row, column=1, sticky=tk.EW, pady=5
         )
         row += 1
 
         ttk.Label(main_frame, text="Poll Interval (min):").grid(row=row, column=0, sticky=tk.W, pady=5)
         self.poll_var = tk.StringVar(value=str(self.config.poll_interval_minutes))
         ttk.Entry(main_frame, textvariable=self.poll_var, width=10).grid(
-            row=row, column=1, sticky=tk.W, pady=5
+            row=row, column=1, sticky=tk.EW, pady=5
         )
         row += 1
 
         ttk.Label(main_frame, text="Poll Offset (min):").grid(row=row, column=0, sticky=tk.W, pady=5)
         self.offset_var = tk.StringVar(value=str(self.config.poll_offset_minutes))
         ttk.Entry(main_frame, textvariable=self.offset_var, width=10).grid(
-            row=row, column=1, sticky=tk.W, pady=5
+            row=row, column=1, sticky=tk.EW, pady=5
         )
         row += 1
 
         ttk.Label(main_frame, text="Discord Webhook:").grid(row=row, column=0, sticky=tk.W, pady=5)
         self.webhook_var = tk.StringVar(value=self.config.discord_webhook_url or "")
         ttk.Entry(main_frame, textvariable=self.webhook_var, width=30).grid(
-            row=row, column=1, sticky=tk.W, pady=5
+            row=row, column=1, sticky=tk.EW, pady=5
         )
         row += 1
 

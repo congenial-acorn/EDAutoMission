@@ -36,7 +36,7 @@ class EDAutoMissionApp:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("ED Auto Mission")
-        self.root.geometry("1500x1200")
+        self._set_initial_window_size()
         self.root.minsize(600, 400)
 
         self.registry = MissionRegistry(DEFAULT_MISSIONS)
@@ -51,6 +51,26 @@ class EDAutoMissionApp:
         self._consume_logs()
 
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
+
+        self.root.bind("<Configure>", self._on_window_resize)
+
+    def _set_initial_window_size(self) -> None:
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+
+        width = int(screen_width * 0.8)
+        height = int(screen_height * 0.8)
+
+        max_width = 1500
+        max_height = 1200
+
+        width = min(width, max_width)
+        height = min(height, max_height)
+
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+
+        self.root.geometry(f"{width}x{height}+{x}+{y}")
 
     def _setup_logging(self) -> None:
         handler = QueueHandler(self.log_queue)
@@ -117,6 +137,7 @@ class EDAutoMissionApp:
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         self.mission_tree.bind("<Double-1>", lambda e: self._edit_mission())
+        self.mission_tree.bind("<Configure>", lambda e: self._on_treeview_resize())
 
         btn_frame = ttk.Frame(top_frame, padding=5)
         btn_frame.pack(fill=tk.Y, side=tk.RIGHT)
@@ -134,7 +155,7 @@ class EDAutoMissionApp:
         log_frame = ttk.LabelFrame(bottom_frame, text="Log", padding=5)
         log_frame.pack(fill=tk.BOTH, expand=True, side=tk.LEFT)
 
-        self.log_text = tk.Text(log_frame, height=8, state=tk.DISABLED, wrap=tk.WORD)
+        self.log_text = tk.Text(log_frame, state=tk.DISABLED, wrap=tk.WORD)
         log_scroll = ttk.Scrollbar(log_frame, orient=tk.VERTICAL, command=self.log_text.yview)
         self.log_text.configure(yscrollcommand=log_scroll.set)
 
@@ -158,6 +179,28 @@ class EDAutoMissionApp:
         self.start_btn.pack(pady=5)
 
         ttk.Button(ctrl_frame, text="Clear Log", command=self._clear_log, width=12).pack(pady=5)
+
+    def _on_treeview_resize(self) -> None:
+        tree_width = self.mission_tree.winfo_width()
+
+        if tree_width > 100:
+            scrollbar_width = 20
+            available_width = tree_width - scrollbar_width
+
+            widths = {
+                "label": available_width * 0.15,
+                "needles": available_width * 0.45,
+                "wing": available_width * 0.08,
+                "min_value": available_width * 0.12,
+                "categories": available_width * 0.20,
+            }
+
+            for col, width in widths.items():
+                self.mission_tree.column(col, width=int(width))
+
+    def _on_window_resize(self, event) -> None:
+        if event.widget == self.root:
+            self.root.after(50, self._on_treeview_resize)
 
     def _populate_mission_list(self) -> None:
         for item in self.mission_tree.get_children():
