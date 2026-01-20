@@ -174,7 +174,7 @@ This repository is under the [MIT License](https://github.com/congenial-acorn/ED
 
 ## Disclaimer
 
-Use of automation tools violates Frontier's Terms of Service. Use at your own risk. The developer is not responsible for any actions taken against your account.
+Use of automation tools violates Frontier's Terms of Service. However, to the current extent of the developer's knowledge, no action has been taken users of this tool yet. Use at your own risk. The developer is not responsible for any actions taken against your account.
 
 ## Credits
 
