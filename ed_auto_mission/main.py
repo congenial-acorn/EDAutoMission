@@ -55,6 +55,7 @@ def create_game(
         screen=screen,
         ocr=ocr,
         input_service=input_service,
+        config=config,
         debug_output=config.debug_ocr,
     )
 

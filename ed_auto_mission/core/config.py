@@ -28,6 +28,12 @@ class AppConfig:
     # Tesseract path (platform-specific defaults handled in setup)
     tesseract_path: Optional[str] = None
 
+    # Timing and threshold settings
+    navigation_delay: float = 5.0
+    input_interval: float = 0.3
+    back_button_mse_threshold: float = 1.0
+    wing_icon_mse_threshold: float = 5000.0
+
     @classmethod
     def from_env(cls) -> AppConfig:
         """Create configuration from environment variables with sensible defaults."""
@@ -41,6 +47,10 @@ class AppConfig:
             interactive=os.getenv("ED_INTERACTIVE", "1").lower() not in ("0", "false", "no"),
             discord_webhook_url=os.getenv("DISCORD_WEBHOOK_URL"),
             tesseract_path=os.getenv("TESSERACT_PATH"),
+            navigation_delay=float(os.getenv("ED_NAVIGATION_DELAY", "5.0")),
+            input_interval=float(os.getenv("ED_INPUT_INTERVAL", "0.3")),
+            back_button_mse_threshold=float(os.getenv("ED_BACK_BUTTON_MSE_THRESHOLD", "1.0")),
+            wing_icon_mse_threshold=float(os.getenv("ED_WING_ICON_MSE_THRESHOLD", "5000.0")),
         )
 
     def prompt_missing_values(self) -> None:

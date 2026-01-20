@@ -12,6 +12,7 @@ from PIL import Image
 from ed_auto_mission.core.types import GameInteraction, ScreenRegion
 from ed_auto_mission.core.coordinates import UI_MAP
 from ed_auto_mission.core.category_navigator import CategoryNavigator
+from ed_auto_mission.core.config import AppConfig
 from ed_auto_mission.services.screen import ScreenService
 from ed_auto_mission.services.ocr import OCRService
 from ed_auto_mission.services.input import InputService
@@ -38,13 +39,15 @@ class EliteDangerousGame:
         screen: ScreenService,
         ocr: OCRService,
         input_service: InputService,
+        config: AppConfig,
         debug_output: bool = False,
     ):
         self._screen = screen
         self._ocr = ocr
         self._input = input_service
+        self._config = config
         self._debug_output = debug_output
-        self._category_navigator = CategoryNavigator(input_service)
+        self._category_navigator = CategoryNavigator(input_service, config)
 
         self._missions_seen = 0
         self._back_button_original: np.ndarray | None = None
@@ -61,13 +64,13 @@ class EliteDangerousGame:
 
     def open_missions_board(self) -> None:
         self._input.press("space", presses=2, interval=slight_random_time(2))
-        sleep(5)
+        sleep(self._config.navigation_delay)
 
     def navigate_to_category(self, category: str) -> None:
         if not self._category_navigator.navigate_to_category(category):
             logger.warning("Unknown category: %s", category)
             return
-        sleep(5)
+        sleep(self._config.navigation_delay)
 
     def at_bottom(self) -> bool:
         region = UI_MAP.back_button
@@ -85,7 +88,7 @@ class EliteDangerousGame:
 
         logger.debug("Back button MSE: %.2f", mse)
 
-        return mse > 1
+        return mse > self._config.back_button_mse_threshold
 
     def ocr_mission(self) -> str:
         region = UI_MAP.get_mission_region(self._missions_seen)
@@ -121,7 +124,7 @@ class EliteDangerousGame:
 
         logger.debug("Wing mission MSE: %.2f", mse)
 
-        return mse < 5000
+        return mse < self._config.wing_icon_mse_threshold
 
     def accept_mission(self) -> None:
         self._input.press("space", presses=2, interval=slight_random_time(0.3))

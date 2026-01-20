@@ -8,19 +8,27 @@ from ed_auto_mission.services.timing import sleep, slight_random_time
 
 if TYPE_CHECKING:
     from ed_auto_mission.services.input import InputService
+    from ed_auto_mission.core.config import AppConfig
+
+
+CATEGORY_KEYS: dict[str, list[tuple[str, int]]] = {
+    "all": [],
+    "combat": [("d", 1)],
+    "transport": [("d", 2)],
+    "freelance": [("d", 3)],
+    "operations": [("s", 1)],
+    "support": [("s", 1), ("d", 1)],
+    "thargoid": [("s", 1), ("d", 2)],
+}
 
 
 class CategoryNavigator:
-    def __init__(self, input_service: InputService):
+    def __init__(self, input_service: InputService, config: AppConfig):
         self._input = input_service
+        self._config = config
         self._category_handlers: dict[str, Callable[[], None]] = {
-            "all": self.navigate_to_all,
-            "combat": self.navigate_to_combat,
-            "transport": self.navigate_to_transport,
-            "freelance": self.navigate_to_freelance,
-            "operations": self.navigate_to_operations,
-            "support": self.navigate_to_support,
-            "thargoid": self.navigate_to_thargoid,
+            category: lambda keys=CATEGORY_KEYS[category]: self._navigate_keys(keys)
+            for category in CATEGORY_KEYS
         }
 
     def navigate_to_category(self, category: str) -> bool:
@@ -28,37 +36,13 @@ class CategoryNavigator:
         if handler is None:
             return False
         handler()
-        sleep(5)
+        sleep(self._config.navigation_delay)
         return True
 
     def get_supported_categories(self) -> list[str]:
         return list(self._category_handlers.keys())
 
-    def navigate_to_all(self) -> None:
-        self._input.press("space", interval=slight_random_time(0.3))
-
-    def navigate_to_combat(self) -> None:
-        self._input.press("d", presses=1, interval=slight_random_time(0.3))
-        self._input.press("space", interval=slight_random_time(0.3))
-
-    def navigate_to_transport(self) -> None:
-        self._input.press("d", presses=2, interval=slight_random_time(0.3))
-        self._input.press("space", interval=slight_random_time(0.3))
-
-    def navigate_to_freelance(self) -> None:
-        self._input.press("d", presses=3, interval=slight_random_time(0.3))
-        self._input.press("space", interval=slight_random_time(0.3))
-
-    def navigate_to_operations(self) -> None:
-        self._input.press("s", presses=1, interval=slight_random_time(0.3))
-        self._input.press("space", interval=slight_random_time(0.3))
-
-    def navigate_to_support(self) -> None:
-        self._input.press("s", presses=1, interval=slight_random_time(0.3))
-        self._input.press("d", presses=1, interval=slight_random_time(0.3))
-        self._input.press("space", interval=slight_random_time(0.3))
-
-    def navigate_to_thargoid(self) -> None:
-        self._input.press("s", presses=1, interval=slight_random_time(0.3))
-        self._input.press("d", presses=2, interval=slight_random_time(0.3))
+    def _navigate_keys(self, keys: list[tuple[str, int]]) -> None:
+        for key, presses in keys:
+            self._input.press(key, presses=presses, interval=slight_random_time(0.3))
         self._input.press("space", interval=slight_random_time(0.3))

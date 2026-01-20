@@ -339,6 +339,7 @@ class EDAutoMissionApp:
                 screen=screen,
                 ocr=ocr,
                 input_service=input_service,
+                config=self.config,
                 debug_output=self.config.debug_ocr,
             )
         except (ImportError, RuntimeError, FileNotFoundError) as e:
