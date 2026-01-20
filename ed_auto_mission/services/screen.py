@@ -72,13 +72,13 @@ class ScreenService:
             return pyautogui.screenshot(region=scaled, imageFilename=filename)
         return pyautogui.screenshot(region=scaled)
 
-    def scale_x(self, value: int, ref_width: int = 3840) -> int:
+    def scale_x(self, value: int) -> int:
         """Scale an x-coordinate from reference to current resolution."""
-        return int(value * self.width / ref_width)
+        return self._context.scale_x(value)
 
-    def scale_y(self, value: int, ref_height: int = 2160) -> int:
+    def scale_y(self, value: int) -> int:
         """Scale a y-coordinate from reference to current resolution."""
-        return int(value * self.height / ref_height)
+        return self._context.scale_y(value)
 
     def scale_region(self, region: ScreenRegion) -> tuple[int, int, int, int]:
         """Scale a ScreenRegion to current screen dimensions."""
