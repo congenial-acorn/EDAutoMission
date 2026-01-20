@@ -32,6 +32,33 @@ def setup_logging(debug: bool = False) -> None:
     )
 
 
+def create_services(config: AppConfig) -> tuple[ScreenService, OCRService, InputService, EliteDangerousGame]:
+    """
+    Create all services needed by CLI and GUI.
+
+    Args:
+        config: Application configuration
+
+    Returns:
+        Tuple of (screen, ocr, input_service, game)
+    """
+    logger.info("Initializing services")
+    screen = ScreenService()
+    ocr = OCRService(screen, debug_output=config.debug_ocr)
+    input_service = InputService(dry_run=config.dry_run)
+    
+    logger.info("Initializing Elite Dangerous game adapter")
+    game = EliteDangerousGame(
+        screen=screen,
+        ocr=ocr,
+        input_service=input_service,
+        config=config,
+        debug_output=config.debug_ocr,
+    )
+    
+    return screen, ocr, input_service, game
+
+
 def create_game(
     config: AppConfig,
     screen: ScreenService,
@@ -116,12 +143,7 @@ def start(
         sleep(4)
 
     # Create services
-    screen = ScreenService()
-    ocr = OCRService(screen, debug_output=config.debug_ocr)
-    input_service = InputService(dry_run=config.dry_run)
-
-    # Create game adapter
-    game = create_game(config, screen, ocr, input_service)
+    screen, ocr, input_service, game = create_services(config)
 
     # Create runner
     runner_config = RunnerConfig(

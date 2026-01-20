@@ -321,27 +321,16 @@ class EDAutoMissionApp:
             initial = 0
 
         try:
-            from ed_auto_mission.services.screen import ScreenService
-            from ed_auto_mission.services.ocr import OCRService, setup_tesseract
-            from ed_auto_mission.services.input import InputService
+            from ed_auto_mission.main import create_services
+            from ed_auto_mission.services.ocr import setup_tesseract
             from ed_auto_mission.services.process import ensure_game_running
             from ed_auto_mission.services.window import focus_elite_dangerous
-            from ed_auto_mission.adapters import EliteDangerousGame
 
             setup_tesseract(self.config.tesseract_path)
             ensure_game_running()
             focus_elite_dangerous()
 
-            screen = ScreenService()
-            ocr = OCRService(screen, debug_output=self.config.debug_ocr)
-            input_service = InputService(dry_run=self.config.dry_run)
-            game = EliteDangerousGame(
-                screen=screen,
-                ocr=ocr,
-                input_service=input_service,
-                config=self.config,
-                debug_output=self.config.debug_ocr,
-            )
+            screen, ocr, input_service, game = create_services(self.config)
         except (ImportError, RuntimeError, FileNotFoundError) as e:
             self._log(f"Failed to initialize: {e}")
             messagebox.showerror("Initialization Error", str(e))
