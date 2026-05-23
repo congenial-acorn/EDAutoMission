@@ -89,6 +89,7 @@ class MissionEditorDialog(BaseDialog):
         main_frame.pack(fill=tk.BOTH, expand=True)
 
         main_frame.columnconfigure(1, weight=1)
+        main_frame.rowconfigure(1, weight=1)
 
         # Label
         ttk.Label(main_frame, text="Label:").grid(row=0, column=0, sticky=tk.W, pady=5)
@@ -103,7 +104,7 @@ class MissionEditorDialog(BaseDialog):
         )
 
         pattern_frame = ttk.Frame(main_frame)
-        pattern_frame.grid(row=1, column=1, sticky=tk.EW, pady=5)
+        pattern_frame.grid(row=1, column=1, sticky=tk.NSEW, pady=5)
 
         self.pattern_text = tk.Text(pattern_frame, width=35, height=6)
         pattern_scroll = ttk.Scrollbar(

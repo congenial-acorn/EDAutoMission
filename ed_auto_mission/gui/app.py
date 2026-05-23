@@ -14,6 +14,7 @@ from ed_auto_mission.core.types import MissionRule
 from ed_auto_mission.core.mission_registry import MissionRegistry, DEFAULT_MISSIONS
 from ed_auto_mission.core.config import AppConfig
 from ed_auto_mission.gui.dialogs import MissionEditorDialog, SettingsDialog
+from ed_auto_mission.gui.display import DisplayStabilizer, enable_dpi_awareness
 from ed_auto_mission.gui.runner import RunnerThread
 
 if TYPE_CHECKING:
@@ -23,9 +24,9 @@ logger = logging.getLogger(__name__)
 
 
 class QueueHandler(logging.Handler):
-    def __init__(self, log_queue: queue.Queue):
+    def __init__(self, log_queue: queue.Queue[str]):
         super().__init__()
-        self.log_queue = log_queue
+        self.log_queue: queue.Queue[str] = log_queue
 
     def emit(self, record: logging.LogRecord) -> None:
         self.log_queue.put(self.format(record))
@@ -33,15 +34,20 @@ class QueueHandler(logging.Handler):
 
 class EDAutoMissionApp:
     def __init__(self):
+        enable_dpi_awareness()
         self.root = tk.Tk()
         self.root.title("ED Auto Mission")
+        self.display = DisplayStabilizer(self.root)
+        self.display.apply()
+        self.display.bind()
         self._set_initial_window_size()
         self.root.minsize(600, 400)
+        self.root.resizable(True, True)
 
         self.registry = MissionRegistry(DEFAULT_MISSIONS)
         self.config = AppConfig.from_env()
         self.runner_thread: RunnerThread | None = None
-        self.log_queue: queue.Queue = queue.Queue()
+        self.log_queue: queue.Queue[str] = queue.Queue()
 
         self._setup_logging()
         self._create_menu()
@@ -99,6 +105,29 @@ class EDAutoMissionApp:
         edit_menu.add_separator()
         edit_menu.add_command(label="Reset to Defaults", command=self._reset_defaults)
 
+        view_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="View", menu=view_menu)
+        view_menu.add_command(
+            label="Increase UI Scale",
+            accelerator="Ctrl++",
+            command=self._increase_ui_scale,
+        )
+        view_menu.add_command(
+            label="Decrease UI Scale",
+            accelerator="Ctrl+-",
+            command=self._decrease_ui_scale,
+        )
+        view_menu.add_command(
+            label="Reset UI Scale",
+            accelerator="Ctrl+0",
+            command=self._reset_ui_scale,
+        )
+
+        self.root.bind("<Control-plus>", lambda _event: self._increase_ui_scale())
+        self.root.bind("<Control-equal>", lambda _event: self._increase_ui_scale())
+        self.root.bind("<Control-minus>", lambda _event: self._decrease_ui_scale())
+        self.root.bind("<Control-0>", lambda _event: self._reset_ui_scale())
+
         help_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Help", menu=help_menu)
         help_menu.add_command(label="About", command=self._show_about)
@@ -106,6 +135,7 @@ class EDAutoMissionApp:
     def _create_main_layout(self) -> None:
         style = ttk.Style()
         style.configure("Treeview", rowheight=50)
+        style.configure("Treeview.Heading", padding=(4, 3))
 
         paned = ttk.PanedWindow(self.root, orient=tk.VERTICAL)
         paned.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -223,9 +253,21 @@ class EDAutoMissionApp:
             for col, width in widths.items():
                 self.mission_tree.column(col, width=int(width))
 
-    def _on_window_resize(self, event) -> None:
+    def _on_window_resize(self, event: tk.Event) -> None:
         if event.widget == self.root:
             self.root.after(50, self._on_treeview_resize)
+
+    def _increase_ui_scale(self) -> None:
+        self.display.adjust_scale(0.1)
+        self.root.after(50, self._on_treeview_resize)
+
+    def _decrease_ui_scale(self) -> None:
+        self.display.adjust_scale(-0.1)
+        self.root.after(50, self._on_treeview_resize)
+
+    def _reset_ui_scale(self) -> None:
+        self.display.reset_scale()
+        self.root.after(50, self._on_treeview_resize)
 
     def _populate_mission_list(self) -> None:
         for item in self.mission_tree.get_children():
