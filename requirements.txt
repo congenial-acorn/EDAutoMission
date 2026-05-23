@@ -3,7 +3,6 @@ pydirectinput
 numpy
 matplotlib
 pillow
-opencv-python
 schedule
 pytesseract
 psutil
