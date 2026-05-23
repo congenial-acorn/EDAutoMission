@@ -24,14 +24,11 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
-      - name: Install Tesseract OCR
+      - name: Install and locate Tesseract OCR
         run: |
           choco install tesseract --yes
           # Refresh PATH so tesseract is discoverable in this shell
           $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-
-      - name: Locate Tesseract
-        run: |
           $exe = (Get-Command tesseract -ErrorAction Stop).Source
           $dir = Split-Path $exe
           "TESSERACT_DIR=$dir" >> $env:GITHUB_ENV
