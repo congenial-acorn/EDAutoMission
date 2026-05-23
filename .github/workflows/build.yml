@@ -1,0 +1,95 @@
+name: Build Windows Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Windows EXE
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Tesseract OCR
+        run: choco install tesseract --yes
+
+      - name: Locate Tesseract
+        run: |
+          $exe = (Get-Command tesseract).Source
+          $dir = Split-Path $exe
+          "TESSERACT_DIR=$dir" >> $env:GITHUB_ENV
+          Write-Host "Tesseract installed at: $dir"
+          # Verify eng.traineddata is present
+          $tessdata = Join-Path $dir "tessdata" "eng.traineddata"
+          if (Test-Path $tessdata) {
+            Write-Host "eng.traineddata found"
+          } else {
+            Write-Error "eng.traineddata NOT found - OCR will not work"
+          }
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build with PyInstaller
+        run: pyinstaller ed_auto_mission.spec
+
+      - name: Verify build output
+        run: |
+          $exe = "dist/EDAutoMission/EDAutoMission.exe"
+          if (Test-Path $exe) {
+            $size = [math]::Round((Get-Item $exe).Length / 1MB, 1)
+            Write-Host "Build OK - EDAutoMission.exe ($size MB)"
+          } else {
+            Write-Error "Build failed - EDAutoMission.exe not found"
+          }
+          # Check bundled Tesseract
+          $tess = "dist/EDAutoMission/_internal/tesseract.exe"
+          if (Test-Path $tess) {
+            Write-Host "Tesseract bundled OK"
+          } else {
+            Write-Warning "Tesseract NOT bundled - users will need separate install"
+          }
+          # Check tessdata
+          $td = "dist/EDAutoMission/_internal/tessdata/eng.traineddata"
+          if (Test-Path $td) {
+            Write-Host "eng.traineddata bundled OK"
+          } else {
+            Write-Warning "eng.traineddata NOT bundled"
+          }
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EDAutoMission-${{ github.ref_name }}
+          path: dist/EDAutoMission/
+          retention-days: 30
+
+      - name: Create zip archive
+        run: |
+          $zipName = "EDAutoMission-${{ github.ref_name }}.zip"
+          Compress-Archive -Path "dist\EDAutoMission\*" -DestinationPath $zipName
+          Write-Host "Created $zipName ($([math]::Round((Get-Item $zipName).Length / 1MB, 1)) MB)"
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: EDAutoMission-${{ github.ref_name }}.zip
+          generate_release_notes: true
