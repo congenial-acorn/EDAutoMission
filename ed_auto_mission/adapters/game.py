@@ -62,7 +62,7 @@ class EliteDangerousGame:
         self._back_button_original = None
 
     def open_missions_board(self) -> None:
-        self._input.press("space", presses=2, interval=slight_random_time(2))
+        self._input.press("space", presses=1, interval=slight_random_time(2))
         sleep(self._config.navigation_delay)
 
     def navigate_to_category(self, category: str) -> None:
