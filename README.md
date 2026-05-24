@@ -15,15 +15,24 @@ Automatically accepts missions in Elite Dangerous based on configurable criteria
 
 ## Requirements
 
-- Python 3.10+
-- [Tesseract OCR](https://github.com/tesseract-ocr/tessdoc/blob/main/Installation.md)
-- Elite Dangerous
+- **Windows Binary**: No additional requirements — Python and Tesseract are bundled
+- **From Source**: Python 3.10+, [Tesseract OCR](https://github.com/tesseract-ocr/tessdoc/blob/main/Installation.md), Elite Dangerous
 
 ## Installation
 
+### Windows Binary (Recommended)
+
+1. Download the latest `EDAutoMission-v*.zip` from [Releases](https://github.com/congenial-acorn/EDAutoMission/releases)
+2. Extract the zip to any folder
+3. Run `EDAutoMission.exe`
+
+Tesseract OCR and all dependencies are included. No Python install needed.
+
+### From Source
+
 ```bash
 # Clone the repository
-git clone https://github.com/Tropingenie/EDAutoMission.git
+git clone https://github.com/congenial-acorn/EDAutoMission.git
 cd EDAutoMission
 
 # Install dependencies
@@ -33,7 +42,7 @@ pip install -e .
 pip install -r requirements.txt
 ```
 
-### Tesseract Setup
+#### Tesseract Setup (Source Only)
 
 Install Tesseract OCR for your platform:
 
