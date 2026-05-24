@@ -36,9 +36,6 @@ git clone https://github.com/congenial-acorn/EDAutoMission.git
 cd EDAutoMission
 
 # Install dependencies
-pip install -e .
-
-# Or using requirements.txt
 pip install -r requirements.txt
 ```
 
