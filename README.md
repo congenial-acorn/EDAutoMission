@@ -67,10 +67,10 @@ The GUI allows you to:
 ```bash
 python main.py --cli
 ```
-
+### Usage Instructions
 1. Dock at a station and open Starport Services
-2. Navigate to the Mission Board
-3. Run the script
+2. Navigate to the "Select Mission Board" screen
+3. Run the script or click start in the interface
 4. On non-Windows systems, switch back to the game within 5 seconds
 
 Press `Ctrl+C` to stop.
